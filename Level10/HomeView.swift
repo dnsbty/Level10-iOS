@@ -1,0 +1,41 @@
+//
+//  HomeView.swift
+//  Level10
+//
+//  Created by Dennis Beatty on 5/15/22.
+//
+
+import SwiftUI
+
+struct HomeView: View {
+    var body: some View {
+        ZStack {
+            Color.violet700.edgesIgnoringSafeArea(.all)
+            
+            VStack {
+                Spacer()
+                
+                Text("Level 10")
+                    .font(.system(size: 53.0, weight: .heavy, design: .rounded))
+                    .foregroundColor(.white)
+                
+                Spacer()
+                
+                Spacer()
+                
+                Spacer()
+                
+                L10Button(text: "Create Game", type: .secondary).padding()
+                L10Button(text: "Join Game", type: .primary).padding(.horizontal)
+                
+                Spacer()
+            }
+        }
+    }
+}
+
+struct HomeView_Previews: PreviewProvider {
+    static var previews: some View {
+        HomeView()
+    }
+}
