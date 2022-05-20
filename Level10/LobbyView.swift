@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct LobbyView: View {
+    @EnvironmentObject var navigation: Navigation
+    
     var body: some View {
         ZStack {
             Color.violet700.ignoresSafeArea()
@@ -44,11 +46,25 @@ struct LobbyView: View {
                 Spacer()
                 
                 
-                L10Button(text: "Start Game", type: .primary).padding()
+                
+                Button {
+                    navigation.currentScreen = .game
+                } label: {
+                    L10Button(text: "Start Game", type: .primary).padding()
+                }
                 
                 HStack {
-                    L10Button(text: "Leave", type: .ghost)
-                    L10Button(text: "Invite", type: .ghost)
+                    Button {
+                        navigation.currentScreen = .home
+                    } label: {
+                        L10Button(text: "Leave", type: .ghost)
+                    }
+                    
+                    Button {
+                        navigation.currentScreen = .lobby
+                    } label: {
+                        L10Button(text: "Invite", type: .ghost)
+                    }
                 }
                 .padding(.horizontal)
             }
@@ -58,6 +74,6 @@ struct LobbyView: View {
 
 struct LobbyView_Previews: PreviewProvider {
     static var previews: some View {
-        LobbyView()
+        LobbyView().environmentObject(Navigation())
     }
 }

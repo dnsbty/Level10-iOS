@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct CreateGameView: View {
+    @EnvironmentObject var navigation: Navigation
     @State var displayName = ""
     @State var skipNextPlayer = false
     
@@ -51,8 +52,17 @@ struct CreateGameView: View {
                 
                 Spacer()
                 
-                L10Button(text: "Create Game", type: .primary).padding()
-                L10Button(text: "Nevermind", type: .ghost).padding(.horizontal)
+                Button {
+                    navigation.currentScreen = .lobby
+                } label: {
+                    L10Button(text: "Create Game", type: .primary).padding()
+                }
+                
+                Button {
+                    navigation.currentScreen = .home
+                } label: {
+                    L10Button(text: "Nevermind", type: .ghost).padding(.horizontal)
+                }
             }
         }
     }
@@ -60,6 +70,6 @@ struct CreateGameView: View {
 
 struct CreateGameView_Previews: PreviewProvider {
     static var previews: some View {
-        CreateGameView()
+        CreateGameView().environmentObject(Navigation())
     }
 }

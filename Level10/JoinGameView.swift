@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct JoinGameView: View {
+    @EnvironmentObject var navigation: Navigation
     @State var displayName = ""
     @State var joinCode = ""
     
@@ -36,8 +37,18 @@ struct JoinGameView: View {
                 
                 Spacer()
                 
-                L10Button(text: "Join Game", type: .primary).padding()
-                L10Button(text: "Nevermind", type: .ghost).padding(.horizontal)
+                
+                Button {
+                    navigation.currentScreen = .lobby
+                } label: {
+                    L10Button(text: "Join Game", type: .primary).padding()
+                }
+                
+                Button {
+                    navigation.currentScreen = .home
+                } label: {
+                    L10Button(text: "Nevermind", type: .ghost).padding(.horizontal)
+                }
             }
         }
     }
@@ -45,6 +56,6 @@ struct JoinGameView: View {
 
 struct JoinGameView_Previews: PreviewProvider {
     static var previews: some View {
-        JoinGameView()
+        JoinGameView().environmentObject(Navigation())
     }
 }

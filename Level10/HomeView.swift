@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct HomeView: View {
+    @EnvironmentObject var navigation: Navigation
+    
     var body: some View {
         ZStack {
             Color.violet700.edgesIgnoringSafeArea(.all)
@@ -25,8 +27,17 @@ struct HomeView: View {
                 
                 Spacer()
                 
-                L10Button(text: "Create Game", type: .secondary).padding()
-                L10Button(text: "Join Game", type: .primary).padding(.horizontal)
+                Button {
+                    navigation.currentScreen = .create
+                } label: {
+                    L10Button(text: "Create Game", type: .secondary).padding(.horizontal)
+                }
+                
+                Button {
+                    navigation.currentScreen = .join
+                } label: {
+                    L10Button(text: "Join Game", type: .primary).padding()
+                }
                 
                 Spacer()
             }
@@ -36,6 +47,6 @@ struct HomeView: View {
 
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
-        HomeView()
+        HomeView().environmentObject(Navigation())
     }
 }

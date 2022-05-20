@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		D7BF72E0283193370051E689 /* Level10App.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7BF72DF283193370051E689 /* Level10App.swift */; };
-		D7BF72E2283193370051E689 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7BF72E1283193370051E689 /* ContentView.swift */; };
 		D7BF72E4283193370051E689 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D7BF72E3283193370051E689 /* Assets.xcassets */; };
 		D7BF72E7283193370051E689 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D7BF72E6283193370051E689 /* Preview Assets.xcassets */; };
 		D7BF72EE2831936F0051E689 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7BF72ED2831936F0051E689 /* HomeView.swift */; };
@@ -26,7 +25,6 @@
 /* Begin PBXFileReference section */
 		D7BF72DC283193370051E689 /* Level10.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Level10.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D7BF72DF283193370051E689 /* Level10App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Level10App.swift; sourceTree = "<group>"; };
-		D7BF72E1283193370051E689 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		D7BF72E3283193370051E689 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D7BF72E6283193370051E689 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		D7BF72ED2831936F0051E689 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -72,7 +70,6 @@
 			isa = PBXGroup;
 			children = (
 				D7BF72DF283193370051E689 /* Level10App.swift */,
-				D7BF72E1283193370051E689 /* ContentView.swift */,
 				D7BF72E3283193370051E689 /* Assets.xcassets */,
 				D7BF72ED2831936F0051E689 /* HomeView.swift */,
 				D7BF72F82831A89C0051E689 /* L10TextField.swift */,
@@ -175,7 +172,6 @@
 				D7BF72FF2831B77D0051E689 /* StatusIndicator.swift in Sources */,
 				D7BF72F4283198080051E689 /* L10Button.swift in Sources */,
 				D7BF72F0283196020051E689 /* Color+Ext.swift in Sources */,
-				D7BF72E2283193370051E689 /* ContentView.swift in Sources */,
 				D7BF73012831B9C20051E689 /* CardView.swift in Sources */,
 				D7BF73032831C17F0051E689 /* GameView.swift in Sources */,
 				D7BF72E0283193370051E689 /* Level10App.swift in Sources */,
