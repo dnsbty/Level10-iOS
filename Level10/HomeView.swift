@@ -8,37 +8,37 @@
 import SwiftUI
 
 struct HomeView: View {
-    @EnvironmentObject var navigation: Navigation
-    
+    @Environment(\.currentScreen) var currentScreen
+
     var body: some View {
         ZStack {
             Color.violet700.edgesIgnoringSafeArea(.all)
-            
+
             VStack {
                 Spacer()
-                
+
                 Text("Level 10")
                     .font(.system(size: 53.0, weight: .heavy, design: .rounded))
                     .foregroundColor(.white)
-                
+
                 Spacer()
-                
+
                 Spacer()
-                
+
                 Spacer()
-                
+
                 Button {
-                    navigation.currentScreen = .create
+                    currentScreen.wrappedValue = .create
                 } label: {
                     L10Button(text: "Create Game", type: .secondary).padding(.horizontal)
                 }
-                
+
                 Button {
-                    navigation.currentScreen = .join
+                    currentScreen.wrappedValue = .join
                 } label: {
                     L10Button(text: "Join Game", type: .primary).padding()
                 }
-                
+
                 Spacer()
             }
         }

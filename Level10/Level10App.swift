@@ -7,22 +7,29 @@
 
 import SwiftUI
 
-enum CurrentScreen {
+enum Screen {
     case home, create, join, lobby, game
 }
 
-final class Navigation: ObservableObject {
-    @Published var currentScreen = CurrentScreen.home
+private struct CurrentScreenKey: EnvironmentKey {
+    static var defaultValue: Binding<Screen> = .constant(.home)
+}
+
+extension EnvironmentValues {
+    var currentScreen: Binding<Screen> {
+        get { self[CurrentScreenKey.self] }
+        set { self[CurrentScreenKey.self] = newValue }
+    }
 }
 
 @main
 struct Level10App: App {
-    @StateObject var navigation = Navigation()
-    
+    @State private var currentScreen = Screen.home
+
     var body: some Scene {
         WindowGroup {
             Group {
-                switch navigation.currentScreen {
+                switch currentScreen {
                 case .home:
                     HomeView()
                 case .create:
@@ -35,7 +42,7 @@ struct Level10App: App {
                     GameView()
                 }
             }
-            .environmentObject(navigation)
+            .environment(\.currentScreen, $currentScreen)
         }
     }
 }

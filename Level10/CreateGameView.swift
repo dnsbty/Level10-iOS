@@ -8,58 +8,58 @@
 import SwiftUI
 
 struct CreateGameView: View {
-    @EnvironmentObject var navigation: Navigation
+    @Environment(\.currentScreen) var currentScreen
     @State var displayName = ""
     @State var skipNextPlayer = false
-    
+
     var body: some View {
         ZStack {
             Color.violet700.ignoresSafeArea()
-            
+
             VStack {
                 Spacer()
-                
+
                 Text("Level 10")
                     .font(.system(size: 53.0, weight: .heavy, design: .rounded))
                     .foregroundColor(.white)
-                
+
                 Spacer()
-                
+
                 Spacer()
-                
+
                 L10TextField(labelText: "Display Name", value: $displayName)
                     .padding()
-                
+
                 Spacer()
-                
+
                 HStack(spacing: 24.0) {
                     Toggle("Skip Next Player", isOn: $skipNextPlayer)
                         .labelsHidden()
                         .foregroundColor(.red500)
                         .tint(.red500)
-                    
+
                     VStack(alignment: .leading) {
                         Text("Skip Next Player")
                             .font(.system(size: 20.0, weight: .semibold, design: .rounded))
                             .foregroundColor(.white)
-                        
+
                         Text("When skip cards are played the next player will be skipped, rather than allowing the player who discarded the skip to choose.")
                             .font(.system(size: 18.0, design: .rounded))
                             .foregroundColor(.violet300)
                     }
                 }
                 .padding()
-                
+
                 Spacer()
-                
+
                 Button {
-                    navigation.currentScreen = .lobby
+                    currentScreen.wrappedValue = .lobby
                 } label: {
                     L10Button(text: "Create Game", type: .primary).padding()
                 }
-                
+
                 Button {
-                    navigation.currentScreen = .home
+                    currentScreen.wrappedValue = .home
                 } label: {
                     L10Button(text: "Nevermind", type: .ghost).padding(.horizontal)
                 }
