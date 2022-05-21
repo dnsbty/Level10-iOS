@@ -9,8 +9,8 @@ import SwiftUI
 
 struct CreateGameView: View {
     @Environment(\.currentScreen) var currentScreen
-    @State var displayName = ""
-    @State var skipNextPlayer = false
+    @State var displayName = UserManager.shared.preferenceString(forKey: .displayName) ?? ""
+    @State var skipNextPlayer = UserManager.shared.preferenceBool(forKey: .skipNextPlayer) ?? false
 
     var body: some View {
         ZStack {
@@ -53,7 +53,7 @@ struct CreateGameView: View {
                 Spacer()
 
                 Button {
-                    currentScreen.wrappedValue = .lobby
+                    createGame()
                 } label: {
                     L10Button(text: "Create Game", type: .primary).padding()
                 }
@@ -66,10 +66,19 @@ struct CreateGameView: View {
             }
         }
     }
+
+    private func createGame() {
+        UserManager.shared.rememberPreference(displayName, forKey: .displayName)
+        UserManager.shared.rememberPreference(skipNextPlayer, forKey: .skipNextPlayer)
+
+        // Create the game via the websocket
+
+        currentScreen.wrappedValue = .lobby
+    }
 }
 
 struct CreateGameView_Previews: PreviewProvider {
     static var previews: some View {
-        CreateGameView().environmentObject(Navigation())
+        CreateGameView()
     }
 }

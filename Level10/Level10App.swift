@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftPhoenixClient
 
 enum Screen {
     case home, create, join, lobby, game
@@ -43,6 +44,7 @@ struct Level10App: App {
                 }
             }
             .environment(\.currentScreen, $currentScreen)
+            .task { await NetworkManager.shared.connectSocket() }
         }
     }
 }

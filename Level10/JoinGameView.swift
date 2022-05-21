@@ -9,7 +9,7 @@ import SwiftUI
 
 struct JoinGameView: View {
     @Environment(\.currentScreen) var currentScreen
-    @State var displayName = ""
+    @State var displayName = UserManager.shared.preferenceString(forKey: .displayName) ?? ""
     @State var joinCode = ""
 
     var body: some View {
@@ -39,7 +39,7 @@ struct JoinGameView: View {
 
 
                 Button {
-                    currentScreen.wrappedValue = .lobby
+                    joinGame()
                 } label: {
                     L10Button(text: "Join Game", type: .primary).padding()
                 }
@@ -52,10 +52,18 @@ struct JoinGameView: View {
             }
         }
     }
+    
+    private func joinGame() {
+        UserManager.shared.rememberPreference(displayName, forKey: .displayName)
+        
+        // Join the game via the websocket
+        
+        currentScreen.wrappedValue = .lobby
+    }
 }
 
 struct JoinGameView_Previews: PreviewProvider {
     static var previews: some View {
-        JoinGameView().environmentObject(Navigation())
+        JoinGameView()
     }
 }

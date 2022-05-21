@@ -74,6 +74,6 @@ struct LobbyView: View {
 
 struct LobbyView_Previews: PreviewProvider {
     static var previews: some View {
-        LobbyView().environmentObject(Navigation())
+        LobbyView()
     }
 }
