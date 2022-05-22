@@ -9,6 +9,7 @@ import SwiftUI
 
 struct LobbyView: View {
     @Environment(\.currentScreen) var currentScreen
+    @EnvironmentObject var viewModel: GameViewModel
 
     var body: some View {
         ZStack {
@@ -19,7 +20,7 @@ struct LobbyView: View {
                     .font(.system(size: 20.0, weight: .semibold, design: .rounded))
                     .foregroundColor(.violet200)
 
-                Text("QEL6")
+                Text(viewModel.joinCode ?? "")
                     .font(.system(size: 40.0, weight: .heavy, design: .rounded))
                     .foregroundColor(.white)
 

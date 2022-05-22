@@ -71,9 +71,14 @@ struct CreateGameView: View {
         UserManager.shared.rememberPreference(displayName, forKey: .displayName)
         UserManager.shared.rememberPreference(skipNextPlayer, forKey: .skipNextPlayer)
 
-        // Create the game via the websocket
-
-        currentScreen.wrappedValue = .lobby
+        Task {
+            do {
+                try await NetworkManager.shared.createGame(withDisplayName: displayName,
+                                                   settings: GameSettings(skipNextPlayer: skipNextPlayer))
+            } catch {
+                print("Error creating game: ", error)
+            }
+        }
     }
 }
 

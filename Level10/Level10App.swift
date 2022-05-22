@@ -25,12 +25,12 @@ extension EnvironmentValues {
 
 @main
 struct Level10App: App {
-    @State private var currentScreen = Screen.home
+    @StateObject private var viewModel = GameViewModel()
 
     var body: some Scene {
         WindowGroup {
             Group {
-                switch currentScreen {
+                switch viewModel.currentScreen {
                 case .home:
                     HomeView()
                 case .create:
@@ -43,8 +43,8 @@ struct Level10App: App {
                     GameView()
                 }
             }
-            .environment(\.currentScreen, $currentScreen)
-            .task { await NetworkManager.shared.connectSocket() }
+            .environment(\.currentScreen, $viewModel.currentScreen)
+            .environmentObject(viewModel)
         }
     }
 }

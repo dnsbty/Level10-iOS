@@ -24,6 +24,9 @@
 		D7BF72FF2831B77D0051E689 /* StatusIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7BF72FE2831B77D0051E689 /* StatusIndicator.swift */; };
 		D7BF73012831B9C20051E689 /* CardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7BF73002831B9C20051E689 /* CardView.swift */; };
 		D7BF73032831C17F0051E689 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7BF73022831C17F0051E689 /* GameView.swift */; };
+		D7C70E66283ABDC800C4A41B /* Game.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7C70E65283ABDC800C4A41B /* Game.swift */; };
+		D7C70E68283ABE4400C4A41B /* Notification+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7C70E67283ABE4400C4A41B /* Notification+Ext.swift */; };
+		D7C70E6A283AC21C00C4A41B /* GameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7C70E69283AC21C00C4A41B /* GameViewModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +48,9 @@
 		D7BF72FE2831B77D0051E689 /* StatusIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusIndicator.swift; sourceTree = "<group>"; };
 		D7BF73002831B9C20051E689 /* CardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardView.swift; sourceTree = "<group>"; };
 		D7BF73022831C17F0051E689 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
+		D7C70E65283ABDC800C4A41B /* Game.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Game.swift; sourceTree = "<group>"; };
+		D7C70E67283ABE4400C4A41B /* Notification+Ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Notification+Ext.swift"; sourceTree = "<group>"; };
+		D7C70E69283AC21C00C4A41B /* GameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -86,9 +92,12 @@
 				D7BF72F3283198080051E689 /* L10Button.swift */,
 				D7BF72F62831A0420051E689 /* CreateGameView.swift */,
 				D7BF72FA2831A9B50051E689 /* JoinGameView.swift */,
+				D7C70E65283ABDC800C4A41B /* Game.swift */,
 				D7A62EFC2838294C00B8E466 /* NetworkManager.swift */,
+				D7C70E69283AC21C00C4A41B /* GameViewModel.swift */,
 				D7A62EFE28383B4200B8E466 /* UserManager.swift */,
 				D7A62F032838820700B8E466 /* Configuration.swift */,
+				D7C70E67283ABE4400C4A41B /* Notification+Ext.swift */,
 				D7BF72FE2831B77D0051E689 /* StatusIndicator.swift */,
 				D7BF72FC2831B4990051E689 /* LobbyView.swift */,
 				D7BF73002831B9C20051E689 /* CardView.swift */,
@@ -184,9 +193,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				D7A62EFD2838294C00B8E466 /* NetworkManager.swift in Sources */,
+				D7C70E66283ABDC800C4A41B /* Game.swift in Sources */,
 				D7BF72F72831A0420051E689 /* CreateGameView.swift in Sources */,
 				D7A62F042838820700B8E466 /* Configuration.swift in Sources */,
+				D7C70E68283ABE4400C4A41B /* Notification+Ext.swift in Sources */,
 				D7BF72EE2831936F0051E689 /* HomeView.swift in Sources */,
+				D7C70E6A283AC21C00C4A41B /* GameViewModel.swift in Sources */,
 				D7A62EFF28383B4200B8E466 /* UserManager.swift in Sources */,
 				D7BF72FD2831B4990051E689 /* LobbyView.swift in Sources */,
 				D7BF72FB2831A9B50051E689 /* JoinGameView.swift in Sources */,
