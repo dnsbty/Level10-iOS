@@ -35,6 +35,7 @@ final class NetworkManager {
     private var lobbyChannel: Channel?
     private var gameChannel: Channel?
     private var socket: Socket?
+    private var presence: Presence?
     
     private init() {
         var configuration = Configuration()
@@ -140,8 +141,15 @@ final class NetworkManager {
     private func connectToGame(joinCode: String) {
         guard let socket = socket else { return }
         gameChannel = socket.channel("game:\(joinCode)")
+        guard let gameChannel = gameChannel else { return }
         
-        gameChannel!.on("players_updated") { message in
+        presence = Presence(channel: gameChannel)
+        presence!.onSync {
+            let connectedUsers = Set(self.presence!.state.keys)
+            NotificationCenter.default.post(name: .didReceivePresenceUpdate, object: nil, userInfo: ["connectedUsers": connectedUsers])
+        }
+        
+        gameChannel.on("players_updated") { message in
             guard let playerDicts = message.payload["players"] as? [[String: String]] else { return }
             let players: [Player] = playerDicts.compactMap { dict in
                 guard let name = dict["name"], let id = dict["id"] else { return nil }
@@ -150,7 +158,7 @@ final class NetworkManager {
             NotificationCenter.default.post(name: .didReceiveUpdatedPlayerList, object: nil, userInfo: ["players": players])
         }
         
-        gameChannel!
+        gameChannel
             .join()
             .receive("ok") { message in print("Connected to game", message.payload)}
             .receive("error") { message in print("Failed to connect to game", message.payload)}

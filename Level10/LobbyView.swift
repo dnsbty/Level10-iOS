@@ -32,7 +32,7 @@ struct LobbyView: View {
                 VStack(alignment: .leading) {
                     ForEach(viewModel.players) { player in
                         HStack(spacing: 18) {
-                            StatusIndicator(status: .offline)
+                            StatusIndicator(status: viewModel.connectedPlayers.contains(player.id) ? .online : .offline)
 
                             Text(player.name)
                                 .font(.system(size: 30.0, weight: .semibold, design: .rounded))
