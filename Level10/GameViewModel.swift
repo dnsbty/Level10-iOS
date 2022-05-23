@@ -13,14 +13,21 @@ class GameViewModel: ObservableObject {
     @Published var joinCode: String?
     @Published var players: [Player] = []
     
+    var inviteUrl: String {
+        var configuration = Configuration()
+        guard let joinCode = joinCode else { return configuration.environment.apiBaseUrl }
+        return "\(configuration.environment.apiBaseUrl)/join/\(joinCode)"
+    }
+    
     init() {
         NotificationCenter.default.addObserver(self, selector: #selector(onCreateGame), name: .didCreateGame, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onLeaveGame), name: .didLeaveGame, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameCreationError), name: .didReceiveGameCreationError, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onPlayerListUpdate), name: .didReceiveUpdatedPlayerList, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onPresenceUpdate), name: .didReceivePresenceUpdate, object: nil)
     }
     
-    @MainActor @objc private func onCreateGame(_ notification: Notification) {
+    @objc private func onCreateGame(_ notification: Notification) {
         guard let joinCode = notification.userInfo?["joinCode"] as? String else { return }
         
         DispatchQueue.main.async {
@@ -29,16 +36,23 @@ class GameViewModel: ObservableObject {
         }
     }
     
-    @MainActor @objc private func onGameCreationError(_ notification: Notification) {
+    @objc private func onGameCreationError(_ notification: Notification) {
         // TODO: Show an alert if game creation fails
     }
     
-    @MainActor @objc private func onPlayerListUpdate(_ notification: Notification) {
+    @objc private func onLeaveGame(_ notification: Notification) {
+        players = []
+        joinCode = nil
+        connectedPlayers = Set<String>()
+        currentScreen = Screen.home
+    }
+    
+    @objc private func onPlayerListUpdate(_ notification: Notification) {
         guard let players = notification.userInfo?["players"] as? [Player] else { return }
         DispatchQueue.main.async { self.players = players }
     }
     
-    @MainActor @objc private func onPresenceUpdate(_ notification: Notification) {
+    @objc private func onPresenceUpdate(_ notification: Notification) {
         guard let connectedPlayers = notification.userInfo?["connectedUsers"] as? Set<String> else { return }
         DispatchQueue.main.async { self.connectedPlayers = connectedPlayers }
     }

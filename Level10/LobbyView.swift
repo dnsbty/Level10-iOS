@@ -56,13 +56,16 @@ struct LobbyView: View {
 
                 HStack {
                     Button {
-                        currentScreen.wrappedValue = .home
+                        NetworkManager.shared.leaveGame()
                     } label: {
                         L10Button(text: "Leave", type: .ghost)
                     }
 
                     Button {
-                        currentScreen.wrappedValue = .lobby
+                        let url = URL(string: viewModel.inviteUrl)
+                        let activityController = UIActivityViewController(activityItems: [url!], applicationActivities: nil)
+                        let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene
+                        windowScene?.windows.first?.rootViewController?.present(activityController, animated: true, completion: nil)
                     } label: {
                         L10Button(text: "Invite", type: .ghost)
                     }

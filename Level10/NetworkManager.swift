@@ -136,6 +136,16 @@ final class NetworkManager {
         }
     }
     
+    
+    /**
+     Leaves the game.
+     */
+    func leaveGame() {
+        gameChannel?.leave()
+        gameChannel = nil
+        NotificationCenter.default.post(name: .didLeaveGame, object: nil)
+    }
+    
     // MARK: Private functions
     
     private func connectToGame(joinCode: String) {
