@@ -56,9 +56,13 @@ struct JoinGameView: View {
     private func joinGame() {
         UserManager.shared.rememberPreference(displayName, forKey: .displayName)
         
-        // Join the game via the websocket
-        
-        currentScreen.wrappedValue = .lobby
+        Task {
+            do {
+                try await NetworkManager.shared.joinGame(withCode: joinCode, displayName: displayName)
+            } catch {
+                print("Error joining game: ", error)
+            }
+        }
     }
 }
 

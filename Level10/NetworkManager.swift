@@ -84,10 +84,11 @@ final class NetworkManager {
         let params: [String: Any] = ["displayName": name, "skipNextPlayer": settings.skipNextPlayer]
         
         channel
-            .push("createGame", payload: params)
+            .push("create_game", payload: params)
             .receive("ok") { response in
                 guard let joinCode = response.payload["joinCode"] as? String else { return }
-                self.connectToGame(joinCode: joinCode)
+                self.gameChannel = socket.channel("game:\(joinCode)")
+                self.connectToGame()
                 NotificationCenter.default.post(name: .didCreateGame, object: nil, userInfo: ["joinCode": joinCode])
             }
             .receive("error") { response in
@@ -136,11 +137,20 @@ final class NetworkManager {
         }
     }
     
+    func joinGame(withCode joinCode: String, displayName name: String) async throws {
+        guard let socket = socket else { throw NetworkError.socketDoesNotExist }
+        if !socket.isConnected { await connectSocket() }
+        let params = ["displayName": name]
+        self.gameChannel = socket.channel("game:\(joinCode)", params: params)
+        self.connectToGame()
+        NotificationCenter.default.post(name: .didJoinGame, object: nil, userInfo: ["joinCode": joinCode])
+    }
     
     /**
      Leaves the game.
      */
     func leaveGame() {
+        gameChannel?.push("leave_game", payload: [:])
         gameChannel?.leave()
         gameChannel = nil
         NotificationCenter.default.post(name: .didLeaveGame, object: nil)
@@ -148,10 +158,8 @@ final class NetworkManager {
     
     // MARK: Private functions
     
-    private func connectToGame(joinCode: String) {
-        guard let socket = socket else { return }
-        gameChannel = socket.channel("game:\(joinCode)")
-        guard let gameChannel = gameChannel else { return }
+    private func connectToGame() {
+        guard let gameChannel = gameChannel, !gameChannel.isJoined else { return }
         
         presence = Presence(channel: gameChannel)
         presence!.onSync {

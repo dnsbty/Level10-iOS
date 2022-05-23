@@ -46,12 +46,12 @@ struct LobbyView: View {
 
                 Spacer()
 
-
-
-                Button {
-                    currentScreen.wrappedValue = .game
-                } label: {
-                    L10Button(text: "Start Game", type: .primary).padding()
+                if viewModel.isCreator {
+                    Button {
+                        currentScreen.wrappedValue = .game
+                    } label: {
+                        L10Button(text: "Start Game", type: .primary).padding()
+                    }
                 }
 
                 HStack {

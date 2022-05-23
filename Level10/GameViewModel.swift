@@ -10,6 +10,7 @@ import Foundation
 class GameViewModel: ObservableObject {
     @Published var connectedPlayers = Set<String>()
     @Published var currentScreen = Screen.home
+    @Published var isCreator = false
     @Published var joinCode: String?
     @Published var players: [Player] = []
     
@@ -21,6 +22,7 @@ class GameViewModel: ObservableObject {
     
     init() {
         NotificationCenter.default.addObserver(self, selector: #selector(onCreateGame), name: .didCreateGame, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onJoinGame), name: .didJoinGame, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onLeaveGame), name: .didLeaveGame, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameCreationError), name: .didReceiveGameCreationError, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onPlayerListUpdate), name: .didReceiveUpdatedPlayerList, object: nil)
@@ -31,6 +33,7 @@ class GameViewModel: ObservableObject {
         guard let joinCode = notification.userInfo?["joinCode"] as? String else { return }
         
         DispatchQueue.main.async {
+            self.isCreator = true
             self.joinCode = joinCode
             self.currentScreen = .lobby
         }
@@ -38,6 +41,16 @@ class GameViewModel: ObservableObject {
     
     @objc private func onGameCreationError(_ notification: Notification) {
         // TODO: Show an alert if game creation fails
+    }
+    
+    @objc private func onJoinGame(_ notification: Notification) {
+        guard let joinCode = notification.userInfo?["joinCode"] as? String else { return }
+        
+        DispatchQueue.main.async {
+            self.isCreator = false
+            self.joinCode = joinCode
+            self.currentScreen = .lobby
+        }
     }
     
     @objc private func onLeaveGame(_ notification: Notification) {
