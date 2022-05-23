@@ -60,7 +60,8 @@ final class NetworkManager {
             authToken = try await UserManager.shared.getToken()
             socket.connect()
             
-            channel.join()
+            channel
+                .join()
                 .receive("ok") { message in print("Lobby joined", message.payload)}
                 .receive("error") { message in print("Failed to join lobby", message.payload)}
         } catch {
@@ -85,6 +86,7 @@ final class NetworkManager {
             .push("createGame", payload: params)
             .receive("ok") { response in
                 guard let joinCode = response.payload["joinCode"] as? String else { return }
+                self.connectToGame(joinCode: joinCode)
                 NotificationCenter.default.post(name: .didCreateGame, object: nil, userInfo: ["joinCode": joinCode])
             }
             .receive("error") { response in
@@ -131,5 +133,26 @@ final class NetworkManager {
             self.logger.warning("Unexpected status code: \(httpResponse.allHeaderFields)")
             throw NetworkError.badServerResponse
         }
+    }
+    
+    // MARK: Private functions
+    
+    private func connectToGame(joinCode: String) {
+        guard let socket = socket else { return }
+        gameChannel = socket.channel("game:\(joinCode)")
+        
+        gameChannel!.on("players_updated") { message in
+            guard let playerDicts = message.payload["players"] as? [[String: String]] else { return }
+            let players: [Player] = playerDicts.compactMap { dict in
+                guard let name = dict["name"], let id = dict["id"] else { return nil }
+                return Player(name: name, id: id)
+            }
+            NotificationCenter.default.post(name: .didReceiveUpdatedPlayerList, object: nil, userInfo: ["players": players])
+        }
+        
+        gameChannel!
+            .join()
+            .receive("ok") { message in print("Connected to game", message.payload)}
+            .receive("error") { message in print("Failed to connect to game", message.payload)}
     }
 }

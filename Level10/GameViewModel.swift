@@ -15,6 +15,7 @@ class GameViewModel: ObservableObject {
     init() {
         NotificationCenter.default.addObserver(self, selector: #selector(onCreateGame), name: .didCreateGame, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameCreationError), name: .didReceiveGameCreationError, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onPlayerListUpdate), name: .didReceiveUpdatedPlayerList, object: nil)
     }
     
     @MainActor @objc private func onCreateGame(_ notification: Notification) {
@@ -28,5 +29,10 @@ class GameViewModel: ObservableObject {
     
     @MainActor @objc private func onGameCreationError(_ notification: Notification) {
         // TODO: Show an alert if game creation fails
+    }
+    
+    @MainActor @objc private func onPlayerListUpdate(_ notification: Notification) {
+        guard let players = notification.userInfo?["players"] as? [Player] else { return }
+        DispatchQueue.main.async { self.players = players }
     }
 }

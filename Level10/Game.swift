@@ -17,7 +17,7 @@ struct GameSettings: Codable {
     let skipNextPlayer: Bool
 }
 
-struct Player: Codable {
-    let displayName: String
+struct Player: Codable, Identifiable {
+    let name: String
     let id: String
 }

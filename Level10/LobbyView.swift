@@ -30,11 +30,11 @@ struct LobbyView: View {
                     .padding()
 
                 VStack(alignment: .leading) {
-                    ForEach(0..<6) { _ in
+                    ForEach(viewModel.players) { player in
                         HStack(spacing: 18) {
                             StatusIndicator(status: .offline)
 
-                            Text("Christopher")
+                            Text(player.name)
                                 .font(.system(size: 30.0, weight: .semibold, design: .rounded))
                                 .foregroundColor(.white)
 
