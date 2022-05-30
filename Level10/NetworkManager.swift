@@ -165,6 +165,20 @@ final class NetworkManager {
     }
     
     /**
+     Reconnect to a game that the player has already created or joined.
+     
+     - Parameter withCode: The join code for the game to which connection should be re-established.
+     
+     - Throws: `NetworkError.socketDoesNotExist` if the socket wasn't properly created for some reason.
+     */
+    func reconnectToGame(withCode joinCode: String) async throws {
+        guard let socket = socket else { throw NetworkError.socketDoesNotExist }
+        if !socket.isConnected { await connectSocket() }
+        self.gameChannel = socket.channel("game:\(joinCode)")
+        self.connectToGame()
+    }
+    
+    /**
      Starts a game. Expects the player sending the message to be the player who created the game.
      */
     func startGame() {
@@ -202,6 +216,28 @@ final class NetworkManager {
             
             let info: [AnyHashable: Any] = ["currentPlayer": currentPlayer, "discardTop": discardTop, "hand": hand, "levels": levels, "players": players]
             NotificationCenter.default.post(name: .gameDidStart, object: nil, userInfo: info)
+        }
+        
+        gameChannel.on("latest_state") { [weak self] message in
+            guard let self = self,
+                  let currentPlayer = message.payload["current_player"] as? String,
+                  let discardTopDict = message.payload["discard_top"] as? [String: String],
+                  let discardTop = self.cardFromDict(discardTopDict),
+                  let handDicts = message.payload["hand"] as? [[String: String]],
+                  let levelDicts = message.payload["levels"] as? [String: [[String: Any]]],
+                  let playerDicts = message.payload["players"] as? [[String: String]]
+            else { return }
+            
+            let hand = handDicts.compactMap(self.cardFromDict)
+            let levels = self.levelsFromDict(levelDicts)
+            
+            let players: [Player] = playerDicts.compactMap { dict in
+                guard let name = dict["name"], let id = dict["id"] else { return nil }
+                return Player(name: name, id: id)
+            }
+            
+            let info: [AnyHashable: Any] = ["currentPlayer": currentPlayer, "discardTop": discardTop, "hand": hand, "levels": levels, "players": players]
+            NotificationCenter.default.post(name: .didReceiveGameState, object: nil, userInfo: info)
         }
         
         gameChannel.on("players_updated") { message in

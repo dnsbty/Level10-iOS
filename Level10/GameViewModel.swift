@@ -19,6 +19,8 @@ class GameViewModel: ObservableObject {
     @Published var levels: [String: Level] = [:]
     @Published var players: [Player] = []
     
+    private let joinCodeKey = "joinCode"
+    
     var inviteUrl: String {
         var configuration = Configuration()
         guard let joinCode = joinCode else { return configuration.environment.apiBaseUrl }
@@ -33,6 +35,9 @@ class GameViewModel: ObservableObject {
         NotificationCenter.default.addObserver(self, selector: #selector(onPlayerListUpdate), name: .didReceiveUpdatedPlayerList, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onPresenceUpdate), name: .didReceivePresenceUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameStart), name: .gameDidStart, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onGameStateUpdate), name: .didReceiveGameState, object: nil)
+        
+        maybeConnectToExistingGame()
     }
     
     func levelGroups(player: String) -> [LevelGroup] {
@@ -40,10 +45,27 @@ class GameViewModel: ObservableObject {
         return playerLevel.groups
     }
     
+    private func maybeConnectToExistingGame() {
+        if let joinCode = UserDefaults.standard.string(forKey: joinCodeKey) {
+            Task {
+                do {
+                    try await NetworkManager.shared.reconnectToGame(withCode: joinCode)
+                } catch {
+                    print("Error reconnecting to game")
+                }
+            }
+        }
+    }
+    
+    private func saveJoinCode(_ joinCode: String?) {
+        UserDefaults.standard.set(joinCode, forKey: joinCodeKey)
+    }
+    
     // MARK: Notification Handlers
     
     @objc private func onCreateGame(_ notification: Notification) {
         guard let joinCode = notification.userInfo?["joinCode"] as? String else { return }
+        saveJoinCode(joinCode)
         
         DispatchQueue.main.async {
             self.isCreator = true
@@ -77,8 +99,30 @@ class GameViewModel: ObservableObject {
         }
     }
     
+    @objc private func onGameStateUpdate(_ notification: Notification) {
+        guard let currentPlayer = notification.userInfo?["currentPlayer"] as? String,
+              let discardTop = notification.userInfo?["discardTop"] as? Card,
+              let hand = notification.userInfo?["hand"] as? [Card],
+              let levels = notification.userInfo?["levels"] as? [String: Level],
+              let players = notification.userInfo?["players"] as? [Player]
+        else { return }
+        
+        let handCounts = Dictionary(uniqueKeysWithValues: players.map { ($0.id, 10) })
+        
+        DispatchQueue.main.async {
+            self.currentPlayer = currentPlayer
+            self.discardPileTopCard = discardTop
+            self.hand = hand
+            self.handCounts = handCounts
+            self.levels = levels
+            self.players = players
+            self.currentScreen = .game
+        }
+    }
+    
     @objc private func onJoinGame(_ notification: Notification) {
         guard let joinCode = notification.userInfo?["joinCode"] as? String else { return }
+        saveJoinCode(joinCode)
         
         DispatchQueue.main.async {
             self.isCreator = false
@@ -88,6 +132,7 @@ class GameViewModel: ObservableObject {
     }
     
     @objc private func onLeaveGame(_ notification: Notification) {
+        saveJoinCode(nil)
         players = []
         joinCode = nil
         connectedPlayers = Set<String>()
