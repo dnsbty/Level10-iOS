@@ -218,11 +218,17 @@ final class NetworkManager {
             NotificationCenter.default.post(name: .gameDidStart, object: nil, userInfo: info)
         }
         
+        gameChannel.on("hand_counts_updated") { message in
+            guard let handCounts = message.payload["hand_counts"] as? [String: Int] else { return }
+            NotificationCenter.default.post(name: .didReceiveUpdatedHandCounts, object: nil, userInfo: ["handCounts": handCounts])
+        }
+        
         gameChannel.on("latest_state") { [weak self] message in
             guard let self = self,
                   let currentPlayer = message.payload["current_player"] as? String,
                   let discardTopDict = message.payload["discard_top"] as? [String: String],
                   let discardTop = self.cardFromDict(discardTopDict),
+                  let handCounts = message.payload["hand_counts"] as? [String: Int],
                   let handDicts = message.payload["hand"] as? [[String: String]],
                   let levelDicts = message.payload["levels"] as? [String: [[String: Any]]],
                   let playerDicts = message.payload["players"] as? [[String: String]]
@@ -236,8 +242,25 @@ final class NetworkManager {
                 return Player(name: name, id: id)
             }
             
-            let info: [AnyHashable: Any] = ["currentPlayer": currentPlayer, "discardTop": discardTop, "hand": hand, "levels": levels, "players": players]
+            let info: [AnyHashable: Any] = [
+                "currentPlayer": currentPlayer,
+                "discardTop": discardTop,
+                "hand": hand,
+                "handCounts": handCounts,
+                "levels": levels,
+                "players": players
+            ]
+            
             NotificationCenter.default.post(name: .didReceiveGameState, object: nil, userInfo: info)
+        }
+        
+        gameChannel.on("new_discard_top") { [weak self] message in
+            guard let self = self,
+                  let cardDict = message.payload["discard_top"] as? [String: String],
+                  let card = self.cardFromDict(cardDict)
+            else { return }
+            
+            NotificationCenter.default.post(name: .discardTopDidChange, object: nil, userInfo: ["discardTop": card])
         }
         
         gameChannel.on("players_updated") { message in

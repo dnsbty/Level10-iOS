@@ -32,10 +32,12 @@ class GameViewModel: ObservableObject {
         NotificationCenter.default.addObserver(self, selector: #selector(onJoinGame), name: .didJoinGame, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onLeaveGame), name: .didLeaveGame, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameCreationError), name: .didReceiveGameCreationError, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(onPlayerListUpdate), name: .didReceiveUpdatedPlayerList, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(onPresenceUpdate), name: .didReceivePresenceUpdate, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(onGameStart), name: .gameDidStart, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameStateUpdate), name: .didReceiveGameState, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onPresenceUpdate), name: .didReceivePresenceUpdate, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onHandCountsUpdated), name: .didReceiveUpdatedHandCounts, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onPlayerListUpdate), name: .didReceiveUpdatedPlayerList, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onDiscardTopChange), name: .discardTopDidChange, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onGameStart), name: .gameDidStart, object: nil)
         
         maybeConnectToExistingGame()
     }
@@ -74,6 +76,11 @@ class GameViewModel: ObservableObject {
         }
     }
     
+    @objc private func onDiscardTopChange(_ notification: Notification) {
+        guard let discardTop = notification.userInfo?["discardTop"] as? Card else { return }
+        DispatchQueue.main.async { self.discardPileTopCard = discardTop }
+    }
+    
     @objc private func onGameCreationError(_ notification: Notification) {
         // TODO: Show an alert if game creation fails
     }
@@ -103,11 +110,10 @@ class GameViewModel: ObservableObject {
         guard let currentPlayer = notification.userInfo?["currentPlayer"] as? String,
               let discardTop = notification.userInfo?["discardTop"] as? Card,
               let hand = notification.userInfo?["hand"] as? [Card],
+              let handCounts = notification.userInfo?["handCounts"] as? [String: Int],
               let levels = notification.userInfo?["levels"] as? [String: Level],
               let players = notification.userInfo?["players"] as? [Player]
         else { return }
-        
-        let handCounts = Dictionary(uniqueKeysWithValues: players.map { ($0.id, 10) })
         
         DispatchQueue.main.async {
             self.currentPlayer = currentPlayer
@@ -118,6 +124,11 @@ class GameViewModel: ObservableObject {
             self.players = players
             self.currentScreen = .game
         }
+    }
+    
+    @objc private func onHandCountsUpdated(_ notification: Notification) {
+        guard let handCounts = notification.userInfo?["handCounts"] as? [String: Int] else { return }
+        DispatchQueue.main.async { self.handCounts = handCounts }
     }
     
     @objc private func onJoinGame(_ notification: Notification) {
