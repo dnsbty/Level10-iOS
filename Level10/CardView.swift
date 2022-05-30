@@ -7,19 +7,6 @@
 
 import SwiftUI
 
-enum CardColor {
-    case red, yellow, green, blue, black
-}
-
-enum CardValue {
-    case one, two, three, four, five, six, seven, eight, nine, ten, eleven, twelve, skip, wild
-}
-
-struct Card {
-    let color: CardColor
-    let value: CardValue
-}
-
 struct CardBackView: View {
     var body: some View {
         ZStack {

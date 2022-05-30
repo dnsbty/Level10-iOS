@@ -33,6 +33,9 @@ struct JoinGameView: View {
                     .padding()
 
                 L10TextField(labelText: "Join Code", value: $joinCode)
+                    .keyboardType(.alphabet)
+                    .textInputAutocapitalization(.characters)
+                    .disableAutocorrection(true)
                     .padding()
 
                 Spacer()

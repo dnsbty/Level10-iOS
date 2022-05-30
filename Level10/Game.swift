@@ -21,3 +21,29 @@ struct Player: Codable, Identifiable {
     let name: String
     let id: String
 }
+
+struct Level: Codable {
+    let groups: [LevelGroup]
+}
+
+struct LevelGroup: Codable {
+    let count: Int
+    let type: LevelGroupType
+    
+    func toString() -> String {
+        switch type {
+        case .color:
+            return "\(count) of One Color"
+        case .run:
+            return "Run of \(count)"
+        case .set:
+            return "Set of \(count)"
+        }
+    }
+}
+
+enum LevelGroupType: String, Codable {
+    case color
+    case run
+    case set
+}

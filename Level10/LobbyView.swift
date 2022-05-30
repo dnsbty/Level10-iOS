@@ -48,7 +48,7 @@ struct LobbyView: View {
 
                 if viewModel.isCreator {
                     Button {
-                        currentScreen.wrappedValue = .game
+                        NetworkManager.shared.startGame()
                     } label: {
                         L10Button(text: "Start Game", type: .primary).padding()
                     }

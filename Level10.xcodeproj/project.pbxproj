@@ -27,6 +27,7 @@
 		D7C70E66283ABDC800C4A41B /* Game.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7C70E65283ABDC800C4A41B /* Game.swift */; };
 		D7C70E68283ABE4400C4A41B /* Notification+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7C70E67283ABE4400C4A41B /* Notification+Ext.swift */; };
 		D7C70E6A283AC21C00C4A41B /* GameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7C70E69283AC21C00C4A41B /* GameViewModel.swift */; };
+		D7E30FAF2844675E007B190B /* Card.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7E30FAE2844675E007B190B /* Card.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,6 +52,7 @@
 		D7C70E65283ABDC800C4A41B /* Game.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Game.swift; sourceTree = "<group>"; };
 		D7C70E67283ABE4400C4A41B /* Notification+Ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Notification+Ext.swift"; sourceTree = "<group>"; };
 		D7C70E69283AC21C00C4A41B /* GameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewModel.swift; sourceTree = "<group>"; };
+		D7E30FAE2844675E007B190B /* Card.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Card.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,6 +103,7 @@
 				D7BF72FE2831B77D0051E689 /* StatusIndicator.swift */,
 				D7BF72FC2831B4990051E689 /* LobbyView.swift */,
 				D7BF73002831B9C20051E689 /* CardView.swift */,
+				D7E30FAE2844675E007B190B /* Card.swift */,
 				D7BF73022831C17F0051E689 /* GameView.swift */,
 				D7BF72E5283193370051E689 /* Preview Content */,
 				D7BF72EF283196020051E689 /* Color+Ext.swift */,
@@ -193,6 +196,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D7A62EFD2838294C00B8E466 /* NetworkManager.swift in Sources */,
+				D7E30FAF2844675E007B190B /* Card.swift in Sources */,
 				D7C70E66283ABDC800C4A41B /* Game.swift in Sources */,
 				D7BF72F72831A0420051E689 /* CreateGameView.swift in Sources */,
 				D7A62F042838820700B8E466 /* Configuration.swift in Sources */,

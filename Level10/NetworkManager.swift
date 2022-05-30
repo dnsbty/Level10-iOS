@@ -137,6 +137,14 @@ final class NetworkManager {
         }
     }
     
+    /**
+     Join an existing game on the server.
+     
+     - Parameter withCode: The join code for the game to join.
+     - Parameter displayName: The name to display for the user creating the game.
+     
+     - Throws: `NetworkError.socketDoesNotExist` if the socket wasn't properly created for some reason.
+     */
     func joinGame(withCode joinCode: String, displayName name: String) async throws {
         guard let socket = socket else { throw NetworkError.socketDoesNotExist }
         if !socket.isConnected { await connectSocket() }
@@ -156,6 +164,13 @@ final class NetworkManager {
         NotificationCenter.default.post(name: .didLeaveGame, object: nil)
     }
     
+    /**
+     Starts a game. Expects the player sending the message to be the player who created the game.
+     */
+    func startGame() {
+        gameChannel?.push("start_game", payload: [:])
+    }
+    
     // MARK: Private functions
     
     private func connectToGame() {
@@ -165,6 +180,28 @@ final class NetworkManager {
         presence!.onSync {
             let connectedUsers = Set(self.presence!.state.keys)
             NotificationCenter.default.post(name: .didReceivePresenceUpdate, object: nil, userInfo: ["connectedUsers": connectedUsers])
+        }
+        
+        gameChannel.on("game_started") { [weak self] message in
+            guard let self = self,
+                  let currentPlayer = message.payload["current_player"] as? String,
+                  let discardTopDict = message.payload["discard_top"] as? [String: String],
+                  let discardTop = self.cardFromDict(discardTopDict),
+                  let handDicts = message.payload["hand"] as? [[String: String]],
+                  let levelDicts = message.payload["levels"] as? [String: [[String: Any]]],
+                  let playerDicts = message.payload["players"] as? [[String: String]]
+            else { return }
+            
+            let hand = handDicts.compactMap(self.cardFromDict)
+            let levels = self.levelsFromDict(levelDicts)
+            
+            let players: [Player] = playerDicts.compactMap { dict in
+                guard let name = dict["name"], let id = dict["id"] else { return nil }
+                return Player(name: name, id: id)
+            }
+            
+            let info: [AnyHashable: Any] = ["currentPlayer": currentPlayer, "discardTop": discardTop, "hand": hand, "levels": levels, "players": players]
+            NotificationCenter.default.post(name: .gameDidStart, object: nil, userInfo: info)
         }
         
         gameChannel.on("players_updated") { message in
@@ -180,5 +217,25 @@ final class NetworkManager {
             .join()
             .receive("ok") { message in print("Connected to game", message.payload)}
             .receive("error") { message in print("Failed to connect to game", message.payload)}
+    }
+    
+    private func cardFromDict(_ dict: [String: String]) -> Card? {
+        guard let color = dict["color"], let value = dict["value"] else { return nil }
+        return Card(color: color, value: value)
+    }
+    
+    private func levelsFromDict(_ dict: [String: [[String: Any]]]) -> [String: Level] {
+        return Dictionary(uniqueKeysWithValues: dict.map({ (playerId: String, levelGroups: [[String : Any]]) in
+            let groups: [LevelGroup] = levelGroups.compactMap { group in
+                guard let count = group["count"] as? Int,
+                      let typeString = group["type"] as? String,
+                      let type = LevelGroupType(rawValue: typeString)
+                else { return nil }
+                
+                return LevelGroup(count: count, type: type)
+            }
+            
+            return (playerId, Level(groups: groups))
+        }))
     }
 }
