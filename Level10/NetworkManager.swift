@@ -137,6 +137,35 @@ final class NetworkManager {
         }
     }
     
+    /**
+     Discards a card from the player's hand.
+     
+     - Throws: `NetworkError.socketDoesNotExist` if the socket wasn't properly created for some reason.
+     */
+    func discardCard(card: Card) async throws {
+        guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketDoesNotExist }
+        if !socket.isConnected { await connectSocket() }
+        
+        channel
+            .push("discard", payload: ["card": card.forJson()])
+            .receive("ok") { [weak self] response in
+                guard let self = self,
+                      let handDicts = response.payload["hand"] as? [[String: String]]
+                else { return }
+                
+                let hand = handDicts.compactMap(self.cardFromDict)
+                NotificationCenter.default.post(name: .handDidUpdate, object: nil, userInfo: ["hand": hand])
+            }
+            .receive("error") { response in
+                NotificationCenter.default.post(name: .didReceiveDiscardError, object: nil, userInfo: ["error": response.payload["response"] ?? ""])
+            }
+    }
+    
+    /**
+     Draws a card from either the draw pile or the discard pile.
+     
+     - Throws: `NetworkError.socketDoesNotExist` if the socket wasn't properly created for some reason.
+     */
     func drawCard(source: DrawSource) async throws {
         guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketDoesNotExist }
         if !socket.isConnected { await connectSocket() }
@@ -246,14 +275,14 @@ final class NetworkManager {
         gameChannel.on("latest_state") { [weak self] message in
             guard let self = self,
                   let currentPlayer = message.payload["current_player"] as? String,
-                  let discardTopDict = message.payload["discard_top"] as? [String: String],
-                  let discardTop = self.cardFromDict(discardTopDict),
                   let handCounts = message.payload["hand_counts"] as? [String: Int],
                   let handDicts = message.payload["hand"] as? [[String: String]],
+                  let hasDrawn = message.payload["has_drawn"] as? Bool,
                   let levelDicts = message.payload["levels"] as? [String: [[String: Any]]],
                   let playerDicts = message.payload["players"] as? [[String: String]]
             else { return }
             
+            let discardTopDict = message.payload["discard_top"] as? [String: String]
             let hand = handDicts.compactMap(self.cardFromDict)
             let levels = self.levelsFromDict(levelDicts)
             
@@ -262,25 +291,32 @@ final class NetworkManager {
                 return Player(name: name, id: id)
             }
             
-            let info: [AnyHashable: Any] = [
+            var info: [AnyHashable: Any] = [
                 "currentPlayer": currentPlayer,
-                "discardTop": discardTop,
                 "hand": hand,
                 "handCounts": handCounts,
+                "hasDrawn": hasDrawn,
                 "levels": levels,
                 "players": players
             ]
+            
+            if let discardTopDict = discardTopDict { info["discardTop"] = self.cardFromDict(discardTopDict) }
             
             NotificationCenter.default.post(name: .didReceiveGameState, object: nil, userInfo: info)
         }
         
         gameChannel.on("new_discard_top") { [weak self] message in
-            guard let self = self,
-                  let cardDict = message.payload["discard_top"] as? [String: String],
-                  let card = self.cardFromDict(cardDict)
-            else { return }
+            guard let self = self else { return }
             
-            NotificationCenter.default.post(name: .discardTopDidChange, object: nil, userInfo: ["discardTop": card])
+            let cardDict = message.payload["discard_top"] as? [String: String]
+            let userInfo: [AnyHashable: Any] = cardDict == nil ? [:] : ["discardTop": self.cardFromDict(cardDict!)!]
+            
+            NotificationCenter.default.post(name: .discardTopDidChange, object: nil, userInfo: userInfo)
+        }
+        
+        gameChannel.on("new_turn") { message in
+            guard let player = message.payload["player"] as? String else { return }
+            NotificationCenter.default.post(name: .currentPlayerDidUpdate, object: nil, userInfo: ["player": player])
         }
         
         gameChannel.on("players_updated") { message in

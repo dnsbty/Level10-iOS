@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Card {
+struct Card: Codable {
     let color: CardColor
     let value: CardValue
     
@@ -24,12 +24,16 @@ struct Card {
         self.color = color
         self.value = value
     }
+    
+    func forJson() -> [String: String] {
+        return ["color": color.rawValue, "value": value.rawValue]
+    }
 }
 
-enum CardColor: String {
+enum CardColor: String, Codable {
     case red, yellow, green, blue, black
 }
 
-enum CardValue: String {
+enum CardValue: String, Codable {
     case one, two, three, four, five, six, seven, eight, nine, ten, eleven, twelve, skip, wild
 }

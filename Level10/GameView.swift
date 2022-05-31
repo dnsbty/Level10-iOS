@@ -66,38 +66,34 @@ struct GameView: View {
                 
                 HStack {
                     Spacer()
-                    if viewModel.currentPlayer == UserManager.shared.id {
-                        Button {
-                            drawCard(source: .drawPile)
-                        } label: {
-                            CardBackView()
-                        }
-                    } else {
+                    
+                    Button {
+                        onTapDrawPile()
+                    } label: {
                         CardBackView()
                     }
+                    
                     Spacer()
-                    if let discardTop = viewModel.discardPileTopCard {
-                        if viewModel.currentPlayer == UserManager.shared.id {
-                            Button {
-                                drawCard(source: .discardPile)
-                            } label: {
-                                CardView(card: discardTop)
-                            }
-                        } else {
+                    
+                    Button {
+                        onTapDiscardPile()
+                    } label: {
+                        if let discardTop = viewModel.discardPileTopCard {
                             CardView(card: discardTop)
+                        } else {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 13)
+                                    .strokeBorder(Color.violet400)
+                                
+                                Text("Discard Pile")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                                    .multilineTextAlignment(.center)
+                                    .foregroundColor(.violet400)
+                            }
+                            .frame(width: 80, height: 112)
                         }
-                    } else {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 13)
-                                .strokeBorder(Color.violet400)
-                            
-                            Text("Discard Pile")
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
-                                .multilineTextAlignment(.center)
-                                .foregroundColor(.violet400)
-                        }
-                        .frame(width: 80, height: 112)
                     }
+                    
                     Spacer()
                 }
                 
@@ -121,16 +117,30 @@ struct GameView: View {
                 
                 HStack {
                     if let newCard = viewModel.newCard {
-                        CardView(card: newCard)
-                            .scaleEffect(0.65)
-                            .frame(width: 54, height: 74)
+                        Button {
+                            if viewModel.currentPlayer == UserManager.shared.id {
+                                viewModel.newCardSelected = !viewModel.newCardSelected
+                            }
+                        } label: {
+                            CardView(card: newCard)
+                                .overlay { viewModel.newCardSelected ? RoundedRectangle(cornerRadius: 13).fill(.white).opacity(0.5) : nil }
+                                .scaleEffect(0.65)
+                                .frame(width: 54, height: 74)
+                        }
                     }
                     
                     LazyVGrid(columns: gridItemLayout, spacing: 8.0) {
                         ForEach(viewModel.hand.indices, id: \.self) { i in
-                            CardView(card: viewModel.hand[i])
-                                .scaleEffect(0.65)
-                                .frame(width: 54, height: 74)
+                            Button {
+                                if viewModel.currentPlayer == UserManager.shared.id {
+                                    viewModel.toggleIndexSelected(i)
+                                }
+                            } label: {
+                                CardView(card: viewModel.hand[i])
+                                    .overlay { viewModel.selectedIndices.contains(i) ? RoundedRectangle(cornerRadius: 13).fill(.white).opacity(0.5) : nil }
+                                    .scaleEffect(0.65)
+                                    .frame(width: 54, height: 74)
+                            }
                         }
                     }
                     .frame(width: 302)
@@ -145,7 +155,7 @@ struct GameView: View {
         }))
     }
     
-    func drawCard(source: DrawSource) {
+    private func drawCard(source: DrawSource) {
         Task {
             do {
                 try await NetworkManager.shared.drawCard(source: source)
@@ -155,6 +165,57 @@ struct GameView: View {
             }
         }
         
+    }
+    
+    private func onTapDiscardPile() {
+        guard viewModel.currentPlayer == UserManager.shared.id else {
+            // TODO: Display error
+            return
+        }
+        
+        if viewModel.hasDrawn {
+            if viewModel.selectedIndices.count == 0 && viewModel.newCardSelected {
+                Task {
+                    do {
+                        try await NetworkManager.shared.discardCard(card: viewModel.newCard!)
+                    } catch {
+                        // TODO: Display errors returned here
+                        print("Error discarding card")
+                    }
+                }
+            } else if viewModel.selectedIndices.count == 1 && !viewModel.newCardSelected {
+                let index = viewModel.selectedIndices.first!
+                let card = viewModel.hand[index]
+                Task {
+                    do {
+                        try await NetworkManager.shared.discardCard(card: card)
+                    } catch {
+                        // TODO: Display errors returned here
+                        print("Error discarding card")
+                    }
+                }
+            } else {
+                // TODO: Display error
+                return
+            }
+        } else {
+            print("Drawing card from discard pile")
+            drawCard(source: .discardPile)
+        }
+    }
+    
+    private func onTapDrawPile() {
+        guard viewModel.currentPlayer == UserManager.shared.id else {
+            // TODO: Display error
+            return
+        }
+        
+        if viewModel.hasDrawn {
+            // TODO: Display error
+            return
+        } else {
+            drawCard(source: .drawPile)
+        }
     }
 }
 
