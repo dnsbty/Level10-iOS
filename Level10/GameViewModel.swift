@@ -17,6 +17,7 @@ class GameViewModel: ObservableObject {
     @Published var isCreator = false
     @Published var joinCode: String?
     @Published var levels: [String: Level] = [:]
+    @Published var newCard: Card?
     @Published var players: [Player] = []
     
     private let joinCodeKey = "joinCode"
@@ -29,8 +30,10 @@ class GameViewModel: ObservableObject {
     
     init() {
         NotificationCenter.default.addObserver(self, selector: #selector(onCreateGame), name: .didCreateGame, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onDrawCard), name: .didDrawCard, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onJoinGame), name: .didJoinGame, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onLeaveGame), name: .didLeaveGame, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onCardDrawError), name: .didReceiveCardDrawError, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameCreationError), name: .didReceiveGameCreationError, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameStateUpdate), name: .didReceiveGameState, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onPresenceUpdate), name: .didReceivePresenceUpdate, object: nil)
@@ -65,6 +68,10 @@ class GameViewModel: ObservableObject {
     
     // MARK: Notification Handlers
     
+    @objc private func onCardDrawError(_ notification: Notification) {
+        // TODO: Show an alert if drawing a card fails
+    }
+    
     @objc private func onCreateGame(_ notification: Notification) {
         guard let joinCode = notification.userInfo?["joinCode"] as? String else { return }
         saveJoinCode(joinCode)
@@ -79,6 +86,11 @@ class GameViewModel: ObservableObject {
     @objc private func onDiscardTopChange(_ notification: Notification) {
         guard let discardTop = notification.userInfo?["discardTop"] as? Card else { return }
         DispatchQueue.main.async { self.discardPileTopCard = discardTop }
+    }
+    
+    @objc private func onDrawCard(_ notification: Notification) {
+        guard let newCard = notification.userInfo?["newCard"] as? Card else { return }
+        DispatchQueue.main.async { self.newCard = newCard }
     }
     
     @objc private func onGameCreationError(_ notification: Notification) {

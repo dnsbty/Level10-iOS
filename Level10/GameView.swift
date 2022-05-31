@@ -66,10 +66,26 @@ struct GameView: View {
                 
                 HStack {
                     Spacer()
-                    CardBackView()
+                    if viewModel.currentPlayer == UserManager.shared.id {
+                        Button {
+                            drawCard(source: .drawPile)
+                        } label: {
+                            CardBackView()
+                        }
+                    } else {
+                        CardBackView()
+                    }
                     Spacer()
                     if let discardTop = viewModel.discardPileTopCard {
-                        CardView(card: discardTop)
+                        if viewModel.currentPlayer == UserManager.shared.id {
+                            Button {
+                                drawCard(source: .discardPile)
+                            } label: {
+                                CardView(card: discardTop)
+                            }
+                        } else {
+                            CardView(card: discardTop)
+                        }
                     } else {
                         ZStack {
                             RoundedRectangle(cornerRadius: 13)
@@ -104,9 +120,11 @@ struct GameView: View {
                 .padding()
                 
                 HStack {
-//                    CardView(card: Card(color: .black, value: .wild))
-//                        .scaleEffect(0.65)
-//                        .frame(width: 54, height: 74)
+                    if let newCard = viewModel.newCard {
+                        CardView(card: newCard)
+                            .scaleEffect(0.65)
+                            .frame(width: 54, height: 74)
+                    }
                     
                     LazyVGrid(columns: gridItemLayout, spacing: 8.0) {
                         ForEach(viewModel.hand.indices, id: \.self) { i in
@@ -120,6 +138,23 @@ struct GameView: View {
                 .padding(.horizontal)
             }
         }
+        .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local).onEnded({ value in
+            if value.translation.width > 0 {
+                NetworkManager.shared.leaveGame()
+            }
+        }))
+    }
+    
+    func drawCard(source: DrawSource) {
+        Task {
+            do {
+                try await NetworkManager.shared.drawCard(source: source)
+            } catch {
+                // TODO: Display the errors returned here
+                print("Error drawing card")
+            }
+        }
+        
     }
 }
 
@@ -152,6 +187,7 @@ struct GameView_Previews: PreviewProvider {
             Card(color: .yellow, value: .twelve),
             Card(color: .black, value: .skip)
         ]
+        viewModel.newCard = Card(color: .blue, value: .three)
         return viewModel
     }
     

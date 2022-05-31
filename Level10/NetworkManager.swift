@@ -137,6 +137,26 @@ final class NetworkManager {
         }
     }
     
+    func drawCard(source: DrawSource) async throws {
+        guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketDoesNotExist }
+        if !socket.isConnected { await connectSocket() }
+        let params: [String: Any] = ["source": source.rawValue]
+        
+        channel
+            .push("draw_card", payload: params)
+            .receive("ok") { [weak self] response in
+                guard let self = self,
+                      let newCardDict = response.payload["card"] as? [String: String],
+                      let newCard = self.cardFromDict(newCardDict)
+                else { return }
+                
+                NotificationCenter.default.post(name: .didDrawCard, object: nil, userInfo: ["newCard": newCard])
+            }
+            .receive("error") { response in
+                NotificationCenter.default.post(name: .didReceiveCardDrawError, object: nil, userInfo: ["error": response.payload["response"] ?? ""])
+            }
+    }
+    
     /**
      Join an existing game on the server.
      

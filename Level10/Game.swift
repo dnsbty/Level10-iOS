@@ -47,3 +47,8 @@ enum LevelGroupType: String, Codable {
     case run
     case set
 }
+
+enum DrawSource: String, Codable {
+    case discardPile = "discard_pile"
+    case drawPile = "draw_pile"
+}

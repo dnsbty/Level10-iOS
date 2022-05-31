@@ -9,8 +9,10 @@ import Foundation
 
 extension Notification.Name {
     static let didCreateGame = Notification.Name("didCreateGame")
+    static let didDrawCard = Notification.Name("didDrawCard")
     static let didJoinGame = Notification.Name("didJoinGame")
     static let didLeaveGame = Notification.Name("didLeaveGame")
+    static let didReceiveCardDrawError = Notification.Name("didReceiveCardDrawError")
     static let didReceiveGameCreationError = Notification.Name("didReceiveGameCreationError")
     static let didReceiveGameState = Notification.Name("didReceiveGameState")
     static let didReceivePresenceUpdate = Notification.Name("didReceivePresenceUpdate")
