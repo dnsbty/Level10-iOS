@@ -14,21 +14,36 @@ class GameViewModel: ObservableObject {
     @Published var discardPileTopCard: Card?
     @Published var hand: [Card] = []
     @Published var handCounts: [String: Int] = [:]
-    @Published var hasDrawn = false
-    @Published var isCreator = false
-    @Published var joinCode: String?
-    @Published var levels: [String: Level] = [:]
     @Published var newCard: Card?
     @Published var newCardSelected = false
     @Published var players: [Player] = []
     @Published var selectedIndices = Set<Int>()
+    @Published var table: [String: [Int: [Card]]] = [:]
+    @Published var tempTable: [Int: [Card]] = [:]
+    
+    var drawnCard: Card?
+    var hasDrawn = false
+    var isCreator = false
+    var joinCode: String?
+    var levels: [String: Level] = [:]
     
     private let joinCodeKey = "joinCode"
+    
+    var isCurrentPlayer: Bool {
+        return UserManager.shared.id == currentPlayer
+    }
     
     var inviteUrl: String {
         var configuration = Configuration()
         guard let joinCode = joinCode else { return configuration.environment.apiBaseUrl }
         return "\(configuration.environment.apiBaseUrl)/join/\(joinCode)"
+    }
+    
+    var selectedCards: [Card] {
+        var cards = [Card]()
+        for index in selectedIndices { cards.append(hand[index]) }
+        if let newCard = newCard, newCardSelected { cards.append(newCard) }
+        return cards
     }
     
     init() {
@@ -53,6 +68,33 @@ class GameViewModel: ObservableObject {
     func levelGroups(player: String) -> [LevelGroup] {
         guard let playerLevel = levels[player] else { return [] }
         return playerLevel.groups
+    }
+    
+    func addToTable(_ index: Int) {
+        if let _ = tempTable[index] {
+            tempTable[index]!.append(contentsOf: selectedCards.sorted())
+        } else {
+            tempTable[index] = selectedCards.sorted()
+        }
+        
+        for index in selectedIndices.sorted(by: { $0 > $1 }) { hand.remove(at: index) }
+        if newCardSelected { newCard = nil }
+        selectedIndices.removeAll()
+        newCardSelected = false
+    }
+    
+    func clearTempTableGroup(_ index: Int) {
+        if let tabledCards = tempTable[index] {
+            hand.append(contentsOf: tabledCards)
+            hand.sort()
+            tempTable.removeValue(forKey: index)
+            
+            if hasDrawn {
+                newCard = drawnCard
+                hand.removeAll(where: { $0 == newCard })
+            }
+        }
+        
     }
     
     func toggleIndexSelected(_ index: Int) {
@@ -112,6 +154,7 @@ class GameViewModel: ObservableObject {
     @objc private func onDrawCard(_ notification: Notification) {
         guard let newCard = notification.userInfo?["newCard"] as? Card else { return }
         DispatchQueue.main.async {
+            self.drawnCard = newCard
             self.newCard = newCard
             self.hasDrawn = true
         }
@@ -144,7 +187,7 @@ class GameViewModel: ObservableObject {
     
     @objc private func onGameStateUpdate(_ notification: Notification) {
         guard let currentPlayer = notification.userInfo?["currentPlayer"] as? String,
-              let hand = notification.userInfo?["hand"] as? [Card],
+              var hand = notification.userInfo?["hand"] as? [Card],
               let handCounts = notification.userInfo?["handCounts"] as? [String: Int],
               let hasDrawn = notification.userInfo?["hasDrawn"] as? Bool,
               let levels = notification.userInfo?["levels"] as? [String: Level],
@@ -153,15 +196,23 @@ class GameViewModel: ObservableObject {
         
         let discardTop = notification.userInfo?["discardTop"] as? Card
         
+        var newCard: Card?
+        if hasDrawn {
+            newCard = hand[0]
+            hand.remove(at: 0)
+        }
+        
         DispatchQueue.main.async {
             self.currentPlayer = currentPlayer
+            self.currentScreen = .game
             self.discardPileTopCard = discardTop
-            self.hand = hand
+            self.drawnCard = newCard
+            self.hand = hand.sorted()
             self.handCounts = handCounts
             self.hasDrawn = hasDrawn
             self.levels = levels
+            self.newCard = newCard
             self.players = players
-            self.currentScreen = .game
         }
     }
     
@@ -174,8 +225,9 @@ class GameViewModel: ObservableObject {
         guard let hand = notification.userInfo?["hand"] as? [Card] else { return }
         
         DispatchQueue.main.async {
+            self.drawnCard = nil
             self.newCard = nil
-            self.hand = hand
+            self.hand = hand.sorted()
             self.selectedIndices.removeAll()
             self.newCardSelected = false
         }
