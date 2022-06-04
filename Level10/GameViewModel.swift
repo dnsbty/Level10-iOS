@@ -18,6 +18,7 @@ class GameViewModel: ObservableObject {
     @Published var newCard: Card?
     @Published var newCardSelected = false
     @Published var players: [Player] = []
+    @Published var roundWinner: Player?
     @Published var selectedIndices = Set<Int>()
     @Published var table: [String: [[Card]]] = [:]
     @Published var tempTable: [Int: [Card]] = [:]
@@ -65,6 +66,7 @@ class GameViewModel: ObservableObject {
         NotificationCenter.default.addObserver(self, selector: #selector(onDiscardTopChange), name: .discardTopDidChange, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameStart), name: .gameDidStart, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onHandUpdate), name: .handDidUpdate, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onRoundFinished), name: .roundDidFinish, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onTableUpdate), name: .tableDidUpdate, object: nil)
         
         maybeConnectToExistingGame()
@@ -222,6 +224,7 @@ class GameViewModel: ObservableObject {
             self.handCounts = handCounts
             self.levels = levels
             self.players = players
+            roundWinner = nil
             tempTable = [:]
             table = [:]
         }
@@ -237,8 +240,9 @@ class GameViewModel: ObservableObject {
               let table = notification.userInfo?["table"] as? [String: [[Card]]]
         else { return }
         
-        let discardTop = notification.userInfo?["discardTop"] as? Card
         let completedLevel = table[UserManager.shared.id!] != nil
+        let discardTop = notification.userInfo?["discardTop"] as? Card
+        let roundWinner = notification.userInfo?["roundWinner"] as? Player
         
         var newCard: Card?
         if hasDrawn {
@@ -268,6 +272,7 @@ class GameViewModel: ObservableObject {
             self.levels = levels
             self.newCard = newCard
             self.players = players
+            self.roundWinner = roundWinner
             self.table = table
         }
     }
@@ -325,6 +330,11 @@ class GameViewModel: ObservableObject {
     @objc private func onPresenceUpdate(_ notification: Notification) {
         guard let connectedPlayers = notification.userInfo?["connectedUsers"] as? Set<String> else { return }
         DispatchQueue.main.async { self.connectedPlayers = connectedPlayers }
+    }
+    
+    @objc private func onRoundFinished(_ notification: Notification) {
+        guard let winner = notification.userInfo?["winner"] as? Player else { return }
+        DispatchQueue.main.async { self.roundWinner = winner }
     }
     
     @objc private func onSetTable(_ notification: Notification) {

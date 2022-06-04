@@ -134,6 +134,16 @@ struct GameView: View {
                     }
                     .padding(.horizontal)
                 }
+                
+                if let winner = viewModel.roundWinner {
+                    ZStack(alignment: .bottom) {
+                        Color(uiColor: .systemBackground).opacity(0.8)
+                        
+                        RoundCompleteModal(currentScreen: $viewModel.currentScreen,
+                                           completedLevel: viewModel.completedLevel,
+                                           winner: winner)
+                    }.ignoresSafeArea()
+                }
             }
             .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local).onEnded({ value in
                 if value.translation.width > 50 {
@@ -413,6 +423,7 @@ struct GameView_Previews: PreviewProvider {
                 Card(color: .red, value: .one)
             ]
         ]
+        viewModel.roundWinner = Player(name: "Dennis", id: "b95e86d7-82d5-4444-9322-2a7405f64fb8")
         return viewModel
     }
     

@@ -327,15 +327,14 @@ final class NetworkManager {
                   let tableDicts = message.payload["table"] as? [String: [[[String: String]]]]
             else { return }
             
-            // Convert the various dictionaries to card, level, and player structs
             let discardTopDict = message.payload["discard_top"] as? [String: String]
+            let roundWinnerDict = message.payload["round_winner"] as? [String: String]
+            
+            // Convert the various dictionaries to card, level, and player structs
             let hand = handDicts.compactMap(self.cardFromDict)
             let levels = self.levelsFromDict(levelDicts)
             
-            let players: [Player] = playerDicts.compactMap { dict in
-                guard let name = dict["name"], let id = dict["id"] else { return nil }
-                return Player(name: name, id: id)
-            }
+            let players: [Player] = playerDicts.compactMap(self.playerFromDict)
             
             var table: [String: [[Card]]] = [:]
             for playerId in tableDicts.keys {
@@ -361,6 +360,7 @@ final class NetworkManager {
             ]
             
             if let discardTopDict = discardTopDict { info["discardTop"] = self.cardFromDict(discardTopDict) }
+            if let roundWinnerDict = roundWinnerDict { info["roundWinner"] = self.playerFromDict(roundWinnerDict) }
             
             NotificationCenter.default.post(name: .didReceiveGameState, object: nil, userInfo: info)
         }
@@ -379,17 +379,28 @@ final class NetworkManager {
             NotificationCenter.default.post(name: .currentPlayerDidUpdate, object: nil, userInfo: ["player": player])
         }
         
-        gameChannel.on("players_updated") { message in
-            guard let playerDicts = message.payload["players"] as? [[String: String]] else { return }
-            let players: [Player] = playerDicts.compactMap { dict in
-                guard let name = dict["name"], let id = dict["id"] else { return nil }
-                return Player(name: name, id: id)
-            }
+        gameChannel.on("round_finished") { [weak self] message in
+            guard let self = self,
+                  let winnerDict = message.payload["winner"] as? [String: String],
+                  let winner = self.playerFromDict(winnerDict)
+            else { return }
+            
+            NotificationCenter.default.post(name: .roundDidFinish, object: nil, userInfo: ["winner": winner])
+        }
+        
+        gameChannel.on("players_updated") { [weak self] message in
+            guard let self = self,
+                  let playerDicts = message.payload["players"] as? [[String: String]]
+            else { return }
+            
+            let players: [Player] = playerDicts.compactMap(self.playerFromDict)
             NotificationCenter.default.post(name: .didReceiveUpdatedPlayerList, object: nil, userInfo: ["players": players])
         }
         
-        gameChannel.on("table_updated") { message in
-            guard let tableDicts = message.payload["table"] as? [String: [[[String: String]]]] else { return }
+        gameChannel.on("table_updated") { [weak self] message in
+            guard let self = self,
+                  let tableDicts = message.payload["table"] as? [String: [[[String: String]]]]
+            else { return }
             
             var table: [String: [[Card]]] = [:]
             for playerId in tableDicts.keys {
@@ -430,5 +441,10 @@ final class NetworkManager {
             
             return (playerId, Level(groups: groups))
         }))
+    }
+    
+    private func playerFromDict(_ dict: [String: String]) -> Player? {
+        guard let name = dict["name"], let id = dict["id"] else { return nil }
+        return Player(name: name, id: id)
     }
 }
