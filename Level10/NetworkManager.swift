@@ -234,6 +234,29 @@ final class NetworkManager {
         gameChannel?.push("start_game", payload: [:])
     }
     
+    /**
+     Adds cards from the player's hand to their table.
+     
+     - Throws: `NetworkError.socketDoesNotExist` if the socket wasn't properly created for some reason.
+     */
+    func tableCards(table: [[Card]]) async throws {
+        guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketDoesNotExist }
+        if !socket.isConnected { await connectSocket() }
+        
+        let tableGroups = table.map { group in
+            group.compactMap { $0.forJson() }
+        }
+        
+        channel
+            .push("table_cards", payload: ["table": tableGroups])
+            .receive("ok") { _ in
+                NotificationCenter.default.post(name: .didSetTable, object: nil)
+            }
+            .receive("error") { response in
+                NotificationCenter.default.post(name: .didReceiveTableSetError, object: nil, userInfo: ["error": response.payload["response"] ?? ""])
+            }
+    }
+    
     // MARK: Private functions
     
     private func connectToGame() {
@@ -279,9 +302,11 @@ final class NetworkManager {
                   let handDicts = message.payload["hand"] as? [[String: String]],
                   let hasDrawn = message.payload["has_drawn"] as? Bool,
                   let levelDicts = message.payload["levels"] as? [String: [[String: Any]]],
-                  let playerDicts = message.payload["players"] as? [[String: String]]
+                  let playerDicts = message.payload["players"] as? [[String: String]],
+                  let tableDicts = message.payload["table"] as? [String: [[[String: String]]]]
             else { return }
             
+            // Convert the various dictionaries to card, level, and player structs
             let discardTopDict = message.payload["discard_top"] as? [String: String]
             let hand = handDicts.compactMap(self.cardFromDict)
             let levels = self.levelsFromDict(levelDicts)
@@ -291,13 +316,27 @@ final class NetworkManager {
                 return Player(name: name, id: id)
             }
             
+            var table: [String: [[Card]]] = [:]
+            for playerId in tableDicts.keys {
+                var playerTable: [[Card]] = []
+                
+                for group in tableDicts[playerId]! {
+                    let cards = group.compactMap(self.cardFromDict)
+                    playerTable.append(cards)
+                }
+                
+                table[playerId] = playerTable
+            }
+            
+            // Broadcast the latest state
             var info: [AnyHashable: Any] = [
                 "currentPlayer": currentPlayer,
                 "hand": hand,
                 "handCounts": handCounts,
                 "hasDrawn": hasDrawn,
                 "levels": levels,
-                "players": players
+                "players": players,
+                "table": table
             ]
             
             if let discardTopDict = discardTopDict { info["discardTop"] = self.cardFromDict(discardTopDict) }
@@ -326,6 +365,24 @@ final class NetworkManager {
                 return Player(name: name, id: id)
             }
             NotificationCenter.default.post(name: .didReceiveUpdatedPlayerList, object: nil, userInfo: ["players": players])
+        }
+        
+        gameChannel.on("table_updated") { message in
+            guard let tableDicts = message.payload["table"] as? [String: [[[String: String]]]] else { return }
+            
+            var table: [String: [[Card]]] = [:]
+            for playerId in tableDicts.keys {
+                var playerTable: [[Card]] = []
+                
+                for group in tableDicts[playerId]! {
+                    let cards = group.compactMap(self.cardFromDict)
+                    playerTable.append(cards)
+                }
+                
+                table[playerId] = playerTable
+            }
+            
+            NotificationCenter.default.post(name: .tableDidUpdate, object: nil, userInfo: ["table": table])
         }
         
         gameChannel

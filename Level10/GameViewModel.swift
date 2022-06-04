@@ -8,6 +8,7 @@
 import Foundation
 
 class GameViewModel: ObservableObject {
+    @Published var completedLevel = false
     @Published var connectedPlayers = Set<String>()
     @Published var currentPlayer: String?
     @Published var currentScreen = Screen.home
@@ -18,7 +19,7 @@ class GameViewModel: ObservableObject {
     @Published var newCardSelected = false
     @Published var players: [Player] = []
     @Published var selectedIndices = Set<Int>()
-    @Published var table: [String: [Int: [Card]]] = [:]
+    @Published var table: [String: [[Card]]] = [:]
     @Published var tempTable: [Int: [Card]] = [:]
     
     var drawnCard: Card?
@@ -58,9 +59,11 @@ class GameViewModel: ObservableObject {
         NotificationCenter.default.addObserver(self, selector: #selector(onPresenceUpdate), name: .didReceivePresenceUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onHandCountsUpdated), name: .didReceiveUpdatedHandCounts, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onPlayerListUpdate), name: .didReceiveUpdatedPlayerList, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onSetTable), name: .didSetTable, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onDiscardTopChange), name: .discardTopDidChange, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameStart), name: .gameDidStart, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onHandUpdate), name: .handDidUpdate, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onTableUpdate), name: .tableDidUpdate, object: nil)
         
         maybeConnectToExistingGame()
     }
@@ -71,6 +74,10 @@ class GameViewModel: ObservableObject {
     }
     
     func addToTable(_ index: Int) {
+        let level = levels[UserManager.shared.id!]!
+        let levelGroup = level.groups[index]
+        guard levelGroup.isValid(selectedCards) else { return }
+        
         if let _ = tempTable[index] {
             tempTable[index]!.append(contentsOf: selectedCards.sorted())
         } else {
@@ -81,6 +88,15 @@ class GameViewModel: ObservableObject {
         if newCardSelected { newCard = nil }
         selectedIndices.removeAll()
         newCardSelected = false
+        
+        for groupIndex in level.groups.indices {
+            if tempTable[groupIndex] == nil { return }
+        }
+        
+        Task {
+            let groups = tempTable.map { $0.1 }
+            try? await NetworkManager.shared.tableCards(table: groups)
+        }
     }
     
     func clearTempTableGroup(_ index: Int) {
@@ -175,13 +191,16 @@ class GameViewModel: ObservableObject {
         let handCounts = Dictionary(uniqueKeysWithValues: players.map { ($0.id, 10) })
         
         DispatchQueue.main.async {
+            self.completedLevel = false
             self.currentPlayer = currentPlayer
+            self.currentScreen = .game
             self.discardPileTopCard = discardTop
-            self.hand = hand
+            self.hand = hand.sorted()
             self.handCounts = handCounts
             self.levels = levels
             self.players = players
-            self.currentScreen = .game
+            self.tempTable = [:]
+            self.table = [:]
         }
     }
     
@@ -191,10 +210,12 @@ class GameViewModel: ObservableObject {
               let handCounts = notification.userInfo?["handCounts"] as? [String: Int],
               let hasDrawn = notification.userInfo?["hasDrawn"] as? Bool,
               let levels = notification.userInfo?["levels"] as? [String: Level],
-              let players = notification.userInfo?["players"] as? [Player]
+              let players = notification.userInfo?["players"] as? [Player],
+              let table = notification.userInfo?["table"] as? [String: [[Card]]]
         else { return }
         
         let discardTop = notification.userInfo?["discardTop"] as? Card
+        let completedLevel = table[UserManager.shared.id!] != nil
         
         var newCard: Card?
         if hasDrawn {
@@ -202,17 +223,29 @@ class GameViewModel: ObservableObject {
             hand.remove(at: 0)
         }
         
+        hand.sort()
+        
+        for groupIndex in tempTable.keys {
+            for card in tempTable[groupIndex]! {
+                if let index = hand.firstIndex(of: card) {
+                    hand.remove(at: index)
+                }
+            }
+        }
+        
         DispatchQueue.main.async {
+            self.completedLevel = completedLevel
             self.currentPlayer = currentPlayer
             self.currentScreen = .game
             self.discardPileTopCard = discardTop
             self.drawnCard = newCard
-            self.hand = hand.sorted()
+            self.hand = hand
             self.handCounts = handCounts
             self.hasDrawn = hasDrawn
             self.levels = levels
             self.newCard = newCard
             self.players = players
+            self.table = table
         }
     }
     
@@ -222,7 +255,14 @@ class GameViewModel: ObservableObject {
     }
     
     @objc private func onHandUpdate(_ notification: Notification) {
-        guard let hand = notification.userInfo?["hand"] as? [Card] else { return }
+        guard var hand = notification.userInfo?["hand"] as? [Card] else { return }
+        for groupIndex in tempTable.keys {
+            for card in tempTable[groupIndex]! {
+                if let index = hand.firstIndex(of: card) {
+                    hand.remove(at: index)
+                }
+            }
+        }
         
         DispatchQueue.main.async {
             self.drawnCard = nil
@@ -260,5 +300,14 @@ class GameViewModel: ObservableObject {
     @objc private func onPresenceUpdate(_ notification: Notification) {
         guard let connectedPlayers = notification.userInfo?["connectedUsers"] as? Set<String> else { return }
         DispatchQueue.main.async { self.connectedPlayers = connectedPlayers }
+    }
+    
+    @objc private func onSetTable(_ notification: Notification) {
+        DispatchQueue.main.async { self.completedLevel = true }
+    }
+    
+    @objc private func onTableUpdate(_ notification: Notification) {
+        guard let table = notification.userInfo?["table"] as? [String: [[Card]]] else { return }
+        DispatchQueue.main.async { self.table = table }
     }
 }

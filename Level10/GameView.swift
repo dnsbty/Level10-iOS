@@ -26,7 +26,7 @@ struct GameView: View {
                 // MARK: Player tables
                 
                 VStack {
-                    VStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 16) {
                         ForEach(viewModel.players) { player in
                             HStack(spacing: 6) {
                                 StatusIndicator(status: viewModel.connectedPlayers.contains(player.id) ? .online : .offline)
@@ -45,25 +45,9 @@ struct GameView: View {
                                 Text("\(handCount == nil ? "" : "\(handCount!)")")
                                     .font(.system(size: 12.0, weight: .semibold, design: .rounded))
                                     .foregroundColor(.violet300)
+                                    .frame(width: 16)
                                 
-                                HStack(spacing: 6) {
-                                    let levelGroups = viewModel.levelGroups(player: player.id)
-                                    ForEach(levelGroups.indices, id: \.self) { i in
-                                        Button {
-                                            onTapPlayerTable(playerId: player.id, groupIndex: i)
-                                        } label: {
-                                            ZStack {
-                                                RoundedRectangle(cornerRadius: 8)
-                                                    .foregroundColor(.violet900)
-                                                
-                                                Text(levelGroups[i].toString())
-                                                    .font(.system(size: 16.0, weight: .semibold, design: .rounded))
-                                                    .foregroundColor(.violet300)
-                                            }
-                                        }
-                                    }
-                                }
-                                .frame(height: 38)
+                                self.otherPlayerTable(player.id).frame(height: 38)
                             }
                         }
                     }
@@ -110,7 +94,11 @@ struct GameView: View {
                     
                     // MARK: Player table
                     
-                    self.playerTable(geometry)
+                    if !viewModel.completedLevel {
+                        self.playerTable(geometry)
+                            .frame(maxHeight: 100)
+                            .padding()
+                    }
                     
                     // MARK: Player hand
                     
@@ -152,6 +140,53 @@ struct GameView: View {
                     NetworkManager.shared.leaveGame()
                 }
             }))
+        }
+    }
+    
+    private func otherPlayerTable(_ playerId: String) -> some View {
+        HStack(spacing: 6) {
+            let levelGroups = viewModel.levelGroups(player: playerId)
+            
+            if let playerTable = viewModel.table[playerId] {
+                ForEach(levelGroups.indices, id: \.self) { index in
+                    let group = playerTable[index]
+                    
+                    Button {
+                        onTapPlayerTable(playerId: playerId, groupIndex: index)
+                    } label: {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .foregroundColor(.violet900)
+                                .overlay {
+                                    GeometryReader { geometry in
+                                        HStack(spacing: -1) {
+                                            ForEach(group.indices, id: \.self) { cardIndex in
+                                                CardView(card: group[cardIndex])
+                                                    .scaleEffect(0.25)
+                                                    .frame(width: (geometry.size.width - 10) / CGFloat(group.count))
+                                            }
+                                        }
+                                        .frame(width: geometry.size.width - 20, height: 40)
+                                        .padding(.horizontal, 10)
+                                    }
+                                }
+                            
+                            
+                        }
+                    }
+                }
+            } else {
+                ForEach(levelGroups.indices, id: \.self) { i in
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .foregroundColor(.violet900)
+                        
+                        Text(levelGroups[i].toString())
+                            .font(.system(size: 16.0, weight: .semibold, design: .rounded))
+                            .foregroundColor(.violet300)
+                    }
+                }
+            }
         }
     }
     
@@ -220,8 +255,6 @@ struct GameView: View {
                 }
             }
         }
-        .frame(maxHeight: 100)
-        .padding()
     }
     
     private func tabledGroupSpacing(cardCount: Int) -> CGFloat {
@@ -308,6 +341,10 @@ struct GameView_Previews: PreviewProvider {
         viewModel.currentPlayer = "b95e86d7-82d5-4444-9322-2a7405f64fb8"
         viewModel.players = [
             Player(name: "Dennis", id: "b95e86d7-82d5-4444-9322-2a7405f64fb8"),
+            Player(name: "Player 1", id: "1"),
+            Player(name: "Dennis", id: "cf34b6bf-b452-400a-a7f3-d5537d5a73b4"),
+            Player(name: "Dennis", id: "cf34b6bf-b452-400a-a7f3-d5537d5a73b4"),
+            Player(name: "Dennis", id: "cf34b6bf-b452-400a-a7f3-d5537d5a73b4"),
             Player(name: "Brett", id: "cf34b6bf-b452-400a-a7f3-d5537d5a73b4")
         ]
         viewModel.levels = [
@@ -316,9 +353,12 @@ struct GameView_Previews: PreviewProvider {
             ]),
             "cf34b6bf-b452-400a-a7f3-d5537d5a73b4": Level(groups: [
                 LevelGroup(count: 3, type: .set), LevelGroup(count: 3, type: .set)
+            ]),
+            "1": Level(groups: [
+                LevelGroup(count: 7, type: .run)
             ])
         ]
-        viewModel.connectedPlayers = ["b95e86d7-82d5-4444-9322-2a7405f64fb8"]
+        viewModel.connectedPlayers = ["b95e86d7-82d5-4444-9322-2a7405f64fb8", "1"]
         viewModel.hand = [
             Card(color: .black, value: .wild),
             Card(color: .black, value: .wild),
@@ -331,7 +371,37 @@ struct GameView_Previews: PreviewProvider {
             Card(color: .yellow, value: .twelve),
             Card(color: .black, value: .skip)
         ]
+        viewModel.handCounts = [
+            "b95e86d7-82d5-4444-9322-2a7405f64fb8": 10,
+            "cf34b6bf-b452-400a-a7f3-d5537d5a73b4": 2,
+            "1": 3
+        ]
         viewModel.newCard = Card(color: .blue, value: .three)
+        viewModel.table = [
+            "cf34b6bf-b452-400a-a7f3-d5537d5a73b4": [
+                [
+                    Card(color: .black, value: .wild),
+                    Card(color: .green, value: .three),
+                    Card(color: .blue, value: .three)
+                ],
+                [
+                    Card(color: .red, value: .one),
+                    Card(color: .yellow, value: .one),
+                    Card(color: .yellow, value: .one),
+                    Card(color: .green, value: .one),
+                    Card(color: .yellow, value: .one),
+                    Card(color: .green, value: .one),
+                    Card(color: .yellow, value: .one),
+                    Card(color: .green, value: .one),
+                    Card(color: .yellow, value: .one),
+                    Card(color: .green, value: .one),
+                    Card(color: .yellow, value: .one),
+                    Card(color: .green, value: .one),
+                    Card(color: .green, value: .one),
+                    Card(color: .red, value: .one)
+                ]
+            ]
+        ]
         viewModel.tempTable = [
             0: [
                 Card(color: .black, value: .wild)
