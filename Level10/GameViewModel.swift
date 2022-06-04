@@ -49,10 +49,12 @@ class GameViewModel: ObservableObject {
     
     init() {
         NotificationCenter.default.addObserver(self, selector: #selector(onCurrentPlayerUpdate), name: .currentPlayerDidUpdate, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onAddToTable), name: .didAddToTable, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onCreateGame), name: .didCreateGame, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onDrawCard), name: .didDrawCard, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onJoinGame), name: .didJoinGame, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onLeaveGame), name: .didLeaveGame, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onAddToTableError), name: .didReceiveAddToTableError, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onCardDrawError), name: .didReceiveCardDrawError, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameCreationError), name: .didReceiveGameCreationError, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameStateUpdate), name: .didReceiveGameState, object: nil)
@@ -71,6 +73,14 @@ class GameViewModel: ObservableObject {
     func levelGroups(player: String) -> [LevelGroup] {
         guard let playerLevel = levels[player] else { return [] }
         return playerLevel.groups
+    }
+    
+    func addToPlayerTable(playerId: String, index: Int) {
+        guard completedLevel, let playerTable = table[playerId], playerTable.count > index else { return }
+        
+        Task {
+            try? await NetworkManager.shared.addToTable(cards: self.selectedCards, tablePlayerId: playerId, groupPosition: index)
+        }
     }
     
     func addToTable(_ index: Int) {
@@ -139,6 +149,19 @@ class GameViewModel: ObservableObject {
     
     // MARK: Notification Handlers
     
+    @objc private func onAddToTable(_ notification: Notification) {
+        DispatchQueue.main.async { [self] in
+            for index in selectedIndices.sorted(by: { $0 > $1 }) { hand.remove(at: index) }
+            if newCardSelected { newCard = nil }
+            selectedIndices.removeAll()
+            newCardSelected = false
+        }
+    }
+    
+    @objc private func onAddToTableError(_ notification: Notification) {
+        // TODO: Show an alert if adding to the table fails
+    }
+    
     @objc private func onCardDrawError(_ notification: Notification) {
         // TODO: Show an alert if drawing a card fails
     }
@@ -147,18 +170,18 @@ class GameViewModel: ObservableObject {
         guard let joinCode = notification.userInfo?["joinCode"] as? String else { return }
         saveJoinCode(joinCode)
         
-        DispatchQueue.main.async {
-            self.isCreator = true
+        DispatchQueue.main.async { [self] in
+            isCreator = true
             self.joinCode = joinCode
-            self.currentScreen = .lobby
+            currentScreen = .lobby
         }
     }
     
     @objc private func onCurrentPlayerUpdate(_ notification: Notification) {
         guard let player = notification.userInfo?["player"] as? String else { return }
-        DispatchQueue.main.async {
-            self.currentPlayer = player
-            self.hasDrawn = false
+        DispatchQueue.main.async { [self] in
+            currentPlayer = player
+            hasDrawn = false
         }
     }
     
@@ -169,10 +192,10 @@ class GameViewModel: ObservableObject {
     
     @objc private func onDrawCard(_ notification: Notification) {
         guard let newCard = notification.userInfo?["newCard"] as? Card else { return }
-        DispatchQueue.main.async {
-            self.drawnCard = newCard
+        DispatchQueue.main.async { [self] in
+            drawnCard = newCard
             self.newCard = newCard
-            self.hasDrawn = true
+            hasDrawn = true
         }
     }
     
@@ -190,17 +213,17 @@ class GameViewModel: ObservableObject {
         
         let handCounts = Dictionary(uniqueKeysWithValues: players.map { ($0.id, 10) })
         
-        DispatchQueue.main.async {
-            self.completedLevel = false
+        DispatchQueue.main.async { [self] in
+            completedLevel = false
             self.currentPlayer = currentPlayer
-            self.currentScreen = .game
-            self.discardPileTopCard = discardTop
+            currentScreen = .game
+            discardPileTopCard = discardTop
             self.hand = hand.sorted()
             self.handCounts = handCounts
             self.levels = levels
             self.players = players
-            self.tempTable = [:]
-            self.table = [:]
+            tempTable = [:]
+            table = [:]
         }
     }
     
@@ -233,12 +256,12 @@ class GameViewModel: ObservableObject {
             }
         }
         
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [self] in
             self.completedLevel = completedLevel
             self.currentPlayer = currentPlayer
-            self.currentScreen = .game
-            self.discardPileTopCard = discardTop
-            self.drawnCard = newCard
+            currentScreen = .game
+            discardPileTopCard = discardTop
+            drawnCard = newCard
             self.hand = hand
             self.handCounts = handCounts
             self.hasDrawn = hasDrawn
@@ -264,12 +287,12 @@ class GameViewModel: ObservableObject {
             }
         }
         
-        DispatchQueue.main.async {
-            self.drawnCard = nil
-            self.newCard = nil
+        DispatchQueue.main.async { [self] in
+            drawnCard = nil
+            newCard = nil
             self.hand = hand.sorted()
-            self.selectedIndices.removeAll()
-            self.newCardSelected = false
+            selectedIndices.removeAll()
+            newCardSelected = false
         }
     }
     
@@ -277,19 +300,21 @@ class GameViewModel: ObservableObject {
         guard let joinCode = notification.userInfo?["joinCode"] as? String else { return }
         saveJoinCode(joinCode)
         
-        DispatchQueue.main.async {
-            self.isCreator = false
+        DispatchQueue.main.async { [self] in
+            isCreator = false
             self.joinCode = joinCode
-            self.currentScreen = .lobby
+            currentScreen = .lobby
         }
     }
     
     @objc private func onLeaveGame(_ notification: Notification) {
-        saveJoinCode(nil)
-        players = []
-        joinCode = nil
-        connectedPlayers = Set<String>()
-        currentScreen = Screen.home
+        DispatchQueue.main.async { [self] in
+            saveJoinCode(nil)
+            players = []
+            joinCode = nil
+            connectedPlayers = Set<String>()
+            currentScreen = Screen.home
+        }
     }
     
     @objc private func onPlayerListUpdate(_ notification: Notification) {

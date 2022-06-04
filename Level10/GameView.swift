@@ -47,7 +47,7 @@ struct GameView: View {
                                     .foregroundColor(.violet300)
                                     .frame(width: 16)
                                 
-                                self.otherPlayerTable(player.id).frame(height: 38)
+                                self.playerTable(player.id)
                             }
                         }
                     }
@@ -95,7 +95,7 @@ struct GameView: View {
                     // MARK: Player table
                     
                     if !viewModel.completedLevel {
-                        self.playerTable(geometry)
+                        self.ownTable(geometry)
                             .frame(maxHeight: 100)
                             .padding()
                     }
@@ -136,14 +136,14 @@ struct GameView: View {
                 }
             }
             .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local).onEnded({ value in
-                if value.translation.width > 0 {
+                if value.translation.width > 50 {
                     NetworkManager.shared.leaveGame()
                 }
             }))
         }
     }
     
-    private func otherPlayerTable(_ playerId: String) -> some View {
+    private func playerTable(_ playerId: String) -> some View {
         HStack(spacing: 6) {
             let levelGroups = viewModel.levelGroups(player: playerId)
             
@@ -170,9 +170,8 @@ struct GameView: View {
                                         .padding(.horizontal, 10)
                                     }
                                 }
-                            
-                            
                         }
+                        .frame(height: 40)
                     }
                 }
             } else {
@@ -185,12 +184,13 @@ struct GameView: View {
                             .font(.system(size: 16.0, weight: .semibold, design: .rounded))
                             .foregroundColor(.violet300)
                     }
+                    .frame(height: 40)
                 }
             }
         }
     }
     
-    private func playerTable(_ geometry: GeometryProxy) -> some View {
+    private func ownTable(_ geometry: GeometryProxy) -> some View {
         HStack(spacing: 6) {
             let levelGroups = viewModel.levelGroups(player: UserManager.shared.id ?? "b95e86d7-82d5-4444-9322-2a7405f64fb8")
             ForEach(levelGroups.indices, id: \.self) { i in
@@ -325,7 +325,7 @@ struct GameView: View {
     }
     
     private func onTapPlayerTable(playerId: String, groupIndex: Int) {
-        print("Tapped player table")
+        viewModel.addToPlayerTable(playerId: playerId, index: groupIndex)
     }
     
     private func onTapSelfTable(groupIndex: Int) {

@@ -53,6 +53,27 @@ final class NetworkManager {
     }
     
     /**
+     Adds cards from the player's hand to one of the places on the table.
+     
+     - Throws: `NetworkError.socketDoesNotExist` if the socket wasn't properly created for some reason.
+     */
+    func addToTable(cards: [Card], tablePlayerId: String, groupPosition: Int) async throws {
+        guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketDoesNotExist }
+        if !socket.isConnected { await connectSocket() }
+        
+        let cardDicts = cards.map { $0.forJson() }
+        
+        channel
+            .push("add_to_table", payload: ["cards": cardDicts, "player_id": tablePlayerId, "position": groupPosition])
+            .receive("ok") { _ in
+                NotificationCenter.default.post(name: .didAddToTable, object: nil)
+            }
+            .receive("error") { response in
+                NotificationCenter.default.post(name: .didReceiveAddToTableError, object: nil, userInfo: ["error": response.payload["response"] ?? ""])
+            }
+    }
+    
+    /**
      Establish connection with the websocket server and join the lobby channel.
      */
     func connectSocket() async {
