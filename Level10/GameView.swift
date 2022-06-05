@@ -19,138 +19,141 @@ struct GameView: View {
     ]
     
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                Color.violet700.ignoresSafeArea()
-                
-                // MARK: Player tables
-                
-                VStack {
-                    VStack(alignment: .leading, spacing: 16) {
-                        ForEach(viewModel.players) { player in
-                            HStack(spacing: 6) {
-                                StatusIndicator(status: viewModel.connectedPlayers.contains(player.id) ? .online : .offline)
-                                    .frame(width: 10, height: 10, alignment: .center)
-                                
-                                Text(player.id == UserManager.shared.id ? "You" : player.name)
-                                    .font(.system(size: 18.0, weight: .semibold, design: .rounded))
-                                    .foregroundColor(.white)
-                                    .lineLimit(1)
-                                    .frame(maxWidth: 100, alignment: .leading)
-                                    .opacity(player.id == viewModel.currentPlayer ? 1.0 : 0.6)
+        ZStack {
+            Color.violet700.ignoresSafeArea()
+            
+            // MARK: Player tables
+            
+            VStack {
+                VStack(alignment: .leading, spacing: 16) {
+                    ForEach(viewModel.players) { player in
+                        HStack(spacing: 6) {
+                            StatusIndicator(status: viewModel.connectedPlayers.contains(player.id) ? .online : .offline)
+                                .frame(width: 10, height: 10, alignment: .center)
                             
-                                Spacer()
-                                
-                                let handCount = viewModel.handCounts[player.id]
-                                Text("\(handCount == nil ? "" : "\(handCount!)")")
-                                    .font(.system(size: 12.0, weight: .semibold, design: .rounded))
-                                    .foregroundColor(.violet300)
-                                    .frame(width: 16)
-                                
-                                self.playerTable(player.id)
-                            }
+                            Text(player.id == UserManager.shared.id ? "You" : player.name)
+                                .font(.system(size: 18.0, weight: .semibold, design: .rounded))
+                                .foregroundColor(.white)
+                                .lineLimit(1)
+                                .frame(maxWidth: 100, alignment: .leading)
+                                .opacity(player.id == viewModel.currentPlayer ? 1.0 : 0.6)
+                        
+                            Spacer()
+                            
+                            let handCount = viewModel.handCounts[player.id]
+                            Text("\(handCount == nil ? "" : "\(handCount!)")")
+                                .font(.system(size: 12.0, weight: .semibold, design: .rounded))
+                                .foregroundColor(.violet300)
+                                .frame(width: 16)
+                            
+                            self.playerTable(player.id)
                         }
                     }
-                    .padding(.horizontal)
-                    
+                }
+                .padding(.horizontal)
+                
+                Spacer()
+                
+                // MARK: Draw and discard piles
+                
+                HStack {
                     Spacer()
                     
-                    // MARK: Draw and discard piles
-                    
-                    HStack {
-                        Spacer()
-                        
-                        Button {
-                            onTapDrawPile()
-                        } label: {
-                            CardBackView()
-                        }
-                        
-                        Spacer()
-                        
-                        Button {
-                            onTapDiscardPile()
-                        } label: {
-                            if let discardTop = viewModel.discardPileTopCard {
-                                CardView(card: discardTop)
-                            } else {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 13)
-                                        .strokeBorder(Color.violet400)
-                                    
-                                    Text("Discard Pile")
-                                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                                        .multilineTextAlignment(.center)
-                                        .foregroundColor(.violet400)
-                                }
-                                .frame(width: 80, height: 112)
-                            }
-                        }
-                        
-                        Spacer()
+                    Button {
+                        onTapDrawPile()
+                    } label: {
+                        CardBackView()
                     }
                     
                     Spacer()
                     
-                    // MARK: Player table
-                    
-                    if !viewModel.completedLevel {
-                        self.ownTable(geometry)
-                            .frame(maxHeight: 100)
-                            .padding()
+                    Button {
+                        onTapDiscardPile()
+                    } label: {
+                        if let discardTop = viewModel.discardPileTopCard {
+                            CardView(card: discardTop)
+                        } else {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 13)
+                                    .strokeBorder(Color.violet400)
+                                
+                                Text("Discard Pile")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                                    .multilineTextAlignment(.center)
+                                    .foregroundColor(.violet400)
+                            }
+                            .frame(width: 80, height: 112)
+                        }
                     }
                     
-                    // MARK: Player hand
+                    Spacer()
+                }
+                
+                Spacer()
+                
+                // MARK: Player table
+                
+//                    if !viewModel.completedLevel {
+//                        self.ownTable(geometry)
+//                            .frame(maxHeight: 100)
+//                            .padding()
+//                    }
+                if !viewModel.completedLevel {
+                    self.ownTable()
+                        .frame(maxHeight: 100)
+                        .padding()
+                }
+                
+                // MARK: Player hand
+                
+                HStack {
+                    if let newCard = viewModel.newCard {
+                        Button {
+                            if viewModel.isCurrentPlayer {
+                                viewModel.newCardSelected = !viewModel.newCardSelected
+                            }
+                        } label: {
+                            CardView(card: newCard)
+                                .overlay { viewModel.newCardSelected ? RoundedRectangle(cornerRadius: 13).fill(.white).opacity(0.5) : nil }
+                                .scaleEffect(0.65)
+                                .frame(width: 54, height: 74)
+                        }
+                    }
                     
-                    HStack {
-                        if let newCard = viewModel.newCard {
+                    LazyVGrid(columns: gridItemLayout, spacing: 8.0) {
+                        ForEach(viewModel.hand.indices, id: \.self) { i in
                             Button {
                                 if viewModel.isCurrentPlayer {
-                                    viewModel.newCardSelected = !viewModel.newCardSelected
+                                    viewModel.toggleIndexSelected(i)
                                 }
                             } label: {
-                                CardView(card: newCard)
-                                    .overlay { viewModel.newCardSelected ? RoundedRectangle(cornerRadius: 13).fill(.white).opacity(0.5) : nil }
+                                CardView(card: viewModel.hand[i])
+                                    .overlay { viewModel.selectedIndices.contains(i) ? RoundedRectangle(cornerRadius: 13).fill(.white).opacity(0.5) : nil }
                                     .scaleEffect(0.65)
                                     .frame(width: 54, height: 74)
                             }
                         }
-                        
-                        LazyVGrid(columns: gridItemLayout, spacing: 8.0) {
-                            ForEach(viewModel.hand.indices, id: \.self) { i in
-                                Button {
-                                    if viewModel.isCurrentPlayer {
-                                        viewModel.toggleIndexSelected(i)
-                                    }
-                                } label: {
-                                    CardView(card: viewModel.hand[i])
-                                        .overlay { viewModel.selectedIndices.contains(i) ? RoundedRectangle(cornerRadius: 13).fill(.white).opacity(0.5) : nil }
-                                        .scaleEffect(0.65)
-                                        .frame(width: 54, height: 74)
-                                }
-                            }
-                        }
-                        .frame(width: 296)
                     }
-                    .padding(.horizontal)
+                    .frame(width: 296)
                 }
-                
-                if let winner = viewModel.roundWinner {
-                    ZStack(alignment: .bottom) {
-                        Color(uiColor: .systemBackground).opacity(0.8)
-                        
-                        RoundCompleteModal(currentScreen: $viewModel.currentScreen,
-                                           completedLevel: viewModel.completedLevel,
-                                           winner: winner)
-                    }.ignoresSafeArea()
-                }
+                .padding(.horizontal)
             }
-            .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local).onEnded({ value in
-                if value.translation.width > 50 {
-                    NetworkManager.shared.leaveGame()
-                }
-            }))
+            
+            if let winner = viewModel.roundWinner {
+                ZStack(alignment: .bottom) {
+                    Color(uiColor: .systemBackground).opacity(0.8)
+                    
+                    RoundCompleteModal(currentScreen: $viewModel.currentScreen,
+                                       completedLevel: viewModel.completedLevel,
+                                       winner: winner)
+                }.ignoresSafeArea()
+            }
         }
+        .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local).onEnded({ value in
+            if value.translation.width > 50 {
+                NetworkManager.shared.leaveGame()
+            }
+        }))
     }
     
     private func playerTable(_ playerId: String) -> some View {
@@ -200,69 +203,47 @@ struct GameView: View {
         }
     }
     
-    private func ownTable(_ geometry: GeometryProxy) -> some View {
+    private func ownTable() -> some View {
         HStack(spacing: 6) {
             let levelGroups = viewModel.levelGroups(player: UserManager.shared.id ?? "b95e86d7-82d5-4444-9322-2a7405f64fb8")
-            ForEach(levelGroups.indices, id: \.self) { i in
-                Button {
-                    onTapSelfTable(groupIndex: i)
-                } label: {
-                    if let group = viewModel.tempTable[i] {
+            
+            ForEach(levelGroups.indices, id: \.self) { index in
+                if let group = viewModel.tempTable[index] {
+                    Button {
+                        onTapSelfTable(groupIndex: index)
+                    } label: {
                         ZStack {
                             RoundedRectangle(cornerRadius: 8)
                                 .foregroundColor(.violet900)
-
-                            VStack(alignment: .center, spacing: 0) {
-                                Text(levelGroups[i].toString())
-                                    .font(.system(size: 12.0, weight: .regular , design: .rounded))
-                                    .foregroundColor(.violet300)
-                                    .padding(.top, 4)
-
-                                HStack(spacing: tabledGroupSpacing(cardCount: group.count)) {
-                                    ForEach(group.indices, id: \.self) { cardIndex in
-                                        CardView(card: group[cardIndex])
-                                            .scaleEffect(0.5)
-                                            .frame(
-                                                width: tabledCardFrameWidth(screenWidth: geometry.size.width, groupCount: levelGroups.count, cardCount: group.count),
-                                                height: 80)
+                                .overlay {
+                                    GeometryReader { geometry in
+                                        HStack(spacing: group.count >= 12 || group.count < 5 ? -3 : -4) {
+                                            ForEach(group.indices, id: \.self) { cardIndex in
+                                                CardView(card: group[cardIndex])
+                                                    .scaleEffect(0.5)
+                                                    .frame(width: (geometry.size.width - 10) / CGFloat(group.count))
+                                            }
+                                        }
+                                        .frame(width: geometry.size.width - 20, height: 80)
+                                        .padding(.horizontal, 10)
                                     }
                                 }
-                                .frame(width: (geometry.size.width - 80) / CGFloat(levelGroups.count), height: 60)
-                                .clipped()
-                                .padding(10)
-                            }
-                            .overlay(alignment: .topTrailing) {
-                                Button {
-                                    viewModel.clearTempTableGroup(i)
-                                } label: {
-                                    ZStack {
-                                        Circle()
-                                            .frame(width: 18, height: 18)
-                                            .foregroundColor(.violet400)
-                                        
-                                        Image(systemName: "xmark")
-                                            .foregroundColor(.violet900)
-                                            .imageScale(.small)
-                                            .frame(width: 14, height: 14)
-                                    }
-                                    .padding(2)
-                                    .frame(width: 44, height: 44)
-                                    .offset(x: 10, y: -10)
-                                }
-                                
-                            }
                         }
-                    } else {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 8)
-                                .foregroundColor(.violet900)
-
-                            Text(levelGroups[i].toString())
-                                .font(.system(size: 16.0, weight: .semibold, design: .rounded))
-                                .foregroundColor(.violet300)
-                        }
+                        .frame(height: 80)
                     }
+                } else {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .foregroundColor(.violet900)
+                        
+                        Text(levelGroups[index].toString())
+                            .font(.system(size: 16.0, weight: .semibold, design: .rounded))
+                            .foregroundColor(.violet300)
+                    }
+                    .frame(height:80)
                 }
+                
+                
             }
         }
     }
@@ -359,7 +340,7 @@ struct GameView_Previews: PreviewProvider {
         ]
         viewModel.levels = [
             "b95e86d7-82d5-4444-9322-2a7405f64fb8": Level(groups: [
-                LevelGroup(count: 3, type: .set), LevelGroup(count: 4, type: .run)
+                LevelGroup(count: 7, type: .run)
             ]),
             "cf34b6bf-b452-400a-a7f3-d5537d5a73b4": Level(groups: [
                 LevelGroup(count: 3, type: .set), LevelGroup(count: 3, type: .set)
@@ -414,16 +395,35 @@ struct GameView_Previews: PreviewProvider {
         ]
         viewModel.tempTable = [
             0: [
-                Card(color: .black, value: .wild)
+                Card(color: .red, value: .one),
+                Card(color: .yellow, value: .two),
+                Card(color: .green, value: .three),
+                Card(color: .blue, value: .four),
+                Card(color: .black, value: .five),
+                Card(color: .red, value: .six),
+                Card(color: .yellow, value: .seven),
+                Card(color: .green, value: .eight),
+                Card(color: .blue, value: .nine),
+                Card(color: .black, value: .ten),
+                Card(color: .red, value: .eleven),
+                Card(color: .yellow, value: .twelve)
             ],
             1: [
                 Card(color: .red, value: .one),
-                Card(color: .red, value: .one),
-                Card(color: .red, value: .one),
-                Card(color: .red, value: .one)
+                Card(color: .yellow, value: .two),
+                Card(color: .green, value: .three),
+                Card(color: .blue, value: .four),
+                Card(color: .black, value: .five),
+                Card(color: .red, value: .six),
+                Card(color: .yellow, value: .seven),
+                Card(color: .green, value: .eight),
+                Card(color: .blue, value: .nine),
+                Card(color: .black, value: .ten),
+                Card(color: .red, value: .eleven),
+                Card(color: .yellow, value: .twelve)
             ]
         ]
-        viewModel.roundWinner = Player(name: "Dennis", id: "b95e86d7-82d5-4444-9322-2a7405f64fb8")
+//        viewModel.roundWinner = Player(name: "Dennis", id: "b95e86d7-82d5-4444-9322-2a7405f64fb8")
         return viewModel
     }
     
