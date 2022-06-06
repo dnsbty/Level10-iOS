@@ -131,3 +131,23 @@ enum DrawSource: String, Codable {
     case discardPile = "discard_pile"
     case drawPile = "draw_pile"
 }
+
+struct Score {
+    let level: Int
+    let playerId: String
+    let points: Int
+}
+
+extension Score: Comparable, Equatable {
+    static func < (lhs: Score, rhs: Score) -> Bool {
+        if lhs.level != rhs.level {
+            return lhs.level > rhs.level
+        } else {
+            return lhs.points < rhs.points
+        }
+    }
+    
+    static func == (lhs: Score, rhs: Score) -> Bool {
+        return lhs.level == rhs.level && lhs.points == rhs.points
+    }
+}

@@ -324,15 +324,18 @@ final class NetworkManager {
                   let hasDrawn = message.payload["has_drawn"] as? Bool,
                   let levelDicts = message.payload["levels"] as? [String: [[String: Any]]],
                   let playerDicts = message.payload["players"] as? [[String: String]],
+                  let roundNumber = message.payload["round_number"] as? Int,
                   let tableDicts = message.payload["table"] as? [String: [[[String: String]]]]
             else { return }
             
             let discardTopDict = message.payload["discard_top"] as? [String: String]
             let roundWinnerDict = message.payload["round_winner"] as? [String: String]
+            let scoreDicts = message.payload["scores"] as? [[String: Any]]
             
-            // Convert the various dictionaries to card, level, and player structs
+            // Convert the various dictionaries to card, level, player, and score structs
             let hand = handDicts.compactMap(self.cardFromDict)
             let levels = self.levelsFromDict(levelDicts)
+            let scores = scoreDicts?.compactMap(self.scoreFromDict) ?? []
             
             let players: [Player] = playerDicts.compactMap(self.playerFromDict)
             
@@ -356,6 +359,8 @@ final class NetworkManager {
                 "hasDrawn": hasDrawn,
                 "levels": levels,
                 "players": players,
+                "roundNumber": roundNumber,
+                "scores": scores,
                 "table": table
             ]
             
@@ -381,11 +386,13 @@ final class NetworkManager {
         
         gameChannel.on("round_finished") { [weak self] message in
             guard let self = self,
+                  let scoreDicts = message.payload["scores"] as? [[String: Any]],
                   let winnerDict = message.payload["winner"] as? [String: String],
                   let winner = self.playerFromDict(winnerDict)
             else { return }
             
-            NotificationCenter.default.post(name: .roundDidFinish, object: nil, userInfo: ["winner": winner])
+            let scores = scoreDicts.compactMap(self.scoreFromDict)
+            NotificationCenter.default.post(name: .roundDidFinish, object: nil, userInfo: ["scores": scores, "winner": winner])
         }
         
         gameChannel.on("players_updated") { [weak self] message in
@@ -446,5 +453,14 @@ final class NetworkManager {
     private func playerFromDict(_ dict: [String: String]) -> Player? {
         guard let name = dict["name"], let id = dict["id"] else { return nil }
         return Player(name: name, id: id)
+    }
+    
+    private func scoreFromDict(_ dict: [String: Any]) -> Score? {
+        guard let level = dict["level"] as? Int,
+              let playerId = dict["player_id"] as? String,
+              let points = dict["points"] as? Int
+        else { return nil }
+        
+        return Score(level: level, playerId: playerId, points: points)
     }
 }

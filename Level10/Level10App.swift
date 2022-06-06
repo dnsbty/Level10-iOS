@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftPhoenixClient
 
 enum Screen {
-    case home, create, join, lobby, game
+    case home, create, join, lobby, game, scoring
 }
 
 private struct CurrentScreenKey: EnvironmentKey {
@@ -41,6 +41,8 @@ struct Level10App: App {
                     LobbyView()
                 case .game:
                     GameView()
+                case .scoring:
+                    ScoreView()
                 }
             }
             .environment(\.currentScreen, $viewModel.currentScreen)

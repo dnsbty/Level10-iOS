@@ -18,6 +18,7 @@ class GameViewModel: ObservableObject {
     @Published var newCard: Card?
     @Published var newCardSelected = false
     @Published var players: [Player] = []
+    @Published var readyPlayers = Set<String>()
     @Published var roundWinner: Player?
     @Published var selectedIndices = Set<Int>()
     @Published var table: [String: [[Card]]] = [:]
@@ -26,8 +27,12 @@ class GameViewModel: ObservableObject {
     var drawnCard: Card?
     var hasDrawn = false
     var isCreator = false
+    var isReadyForNextRound = false
     var joinCode: String?
     var levels: [String: Level] = [:]
+    var playersById: [String: Player] = [:]
+    var roundNumber = 1
+    var scores: [Score] = []
     
     private let joinCodeKey = "joinCode"
     
@@ -70,11 +75,6 @@ class GameViewModel: ObservableObject {
         NotificationCenter.default.addObserver(self, selector: #selector(onTableUpdate), name: .tableDidUpdate, object: nil)
         
         maybeConnectToExistingGame()
-    }
-    
-    func levelGroups(player: String) -> [LevelGroup] {
-        guard let playerLevel = levels[player] else { return [] }
-        return playerLevel.groups
     }
     
     func addToPlayerTable(playerId: String, index: Int) {
@@ -123,6 +123,19 @@ class GameViewModel: ObservableObject {
             }
         }
         
+    }
+    
+    func isConnected(playerId: String) -> Bool {
+        return connectedPlayers.contains(playerId)
+    }
+    
+    func levelGroups(player: String) -> [LevelGroup] {
+        guard let playerLevel = levels[player] else { return [] }
+        return playerLevel.groups
+    }
+    
+    func player(id: String) -> Player? {
+        return self.players.first(where: { $0.id == id })
     }
     
     func toggleIndexSelected(_ index: Int) {
@@ -224,6 +237,7 @@ class GameViewModel: ObservableObject {
             self.handCounts = handCounts
             self.levels = levels
             self.players = players
+            roundNumber = 1
             roundWinner = nil
             tempTable = [:]
             table = [:]
@@ -237,6 +251,8 @@ class GameViewModel: ObservableObject {
               let hasDrawn = notification.userInfo?["hasDrawn"] as? Bool,
               let levels = notification.userInfo?["levels"] as? [String: Level],
               let players = notification.userInfo?["players"] as? [Player],
+              let roundNumber = notification.userInfo?["roundNumber"] as? Int,
+              let scores = notification.userInfo?["scores"] as? [Score],
               let table = notification.userInfo?["table"] as? [String: [[Card]]]
         else { return }
         
@@ -272,7 +288,9 @@ class GameViewModel: ObservableObject {
             self.levels = levels
             self.newCard = newCard
             self.players = players
+            self.roundNumber = roundNumber
             self.roundWinner = roundWinner
+            self.scores = scores.sorted()
             self.table = table
         }
     }
@@ -333,8 +351,14 @@ class GameViewModel: ObservableObject {
     }
     
     @objc private func onRoundFinished(_ notification: Notification) {
-        guard let winner = notification.userInfo?["winner"] as? Player else { return }
-        DispatchQueue.main.async { self.roundWinner = winner }
+        guard let winner = notification.userInfo?["winner"] as? Player,
+              let scores = notification.userInfo?["scores"] as? [Score]
+        else { return }
+        
+        DispatchQueue.main.async {
+            self.roundWinner = winner
+            self.scores = scores.sorted()
+        }
     }
     
     @objc private func onSetTable(_ notification: Notification) {

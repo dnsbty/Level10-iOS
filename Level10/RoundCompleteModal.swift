@@ -30,7 +30,7 @@ struct RoundCompleteModal: View {
                     .foregroundColor(.violet200)
                 
                 Button {
-                    print("Go to score screen")
+                    currentScreen = .scoring
                 } label: {
                     L10Button(text: "Check the Scores", type: .primary).padding(.horizontal)
                 }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D762F4E1284D6DDF008FADA4 /* ScoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D762F4E0284D6DDF008FADA4 /* ScoreView.swift */; };
 		D7872F36284C17BD004AA89E /* RoundCompleteModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7872F35284C17BD004AA89E /* RoundCompleteModal.swift */; };
 		D7A62EFB28380BC400B8E466 /* SwiftPhoenixClient in Frameworks */ = {isa = PBXBuildFile; productRef = D7A62EFA28380BC400B8E466 /* SwiftPhoenixClient */; };
 		D7A62EFD2838294C00B8E466 /* NetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A62EFC2838294C00B8E466 /* NetworkManager.swift */; };
@@ -32,6 +33,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		D762F4E0284D6DDF008FADA4 /* ScoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreView.swift; sourceTree = "<group>"; };
 		D7872F35284C17BD004AA89E /* RoundCompleteModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundCompleteModal.swift; sourceTree = "<group>"; };
 		D7A62EFC2838294C00B8E466 /* NetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkManager.swift; sourceTree = "<group>"; };
 		D7A62EFE28383B4200B8E466 /* UserManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserManager.swift; sourceTree = "<group>"; };
@@ -104,6 +106,7 @@
 				D7A62F032838820700B8E466 /* Configuration.swift */,
 				D7C70E67283ABE4400C4A41B /* Notification+Ext.swift */,
 				D7BF72FE2831B77D0051E689 /* StatusIndicator.swift */,
+				D762F4E0284D6DDF008FADA4 /* ScoreView.swift */,
 				D7BF72FC2831B4990051E689 /* LobbyView.swift */,
 				D7BF73002831B9C20051E689 /* CardView.swift */,
 				D7E30FAE2844675E007B190B /* Card.swift */,
@@ -207,6 +210,7 @@
 				D7BF72EE2831936F0051E689 /* HomeView.swift in Sources */,
 				D7C70E6A283AC21C00C4A41B /* GameViewModel.swift in Sources */,
 				D7872F36284C17BD004AA89E /* RoundCompleteModal.swift in Sources */,
+				D762F4E1284D6DDF008FADA4 /* ScoreView.swift in Sources */,
 				D7A62EFF28383B4200B8E466 /* UserManager.swift in Sources */,
 				D7BF72FD2831B4990051E689 /* LobbyView.swift in Sources */,
 				D7BF72FB2831A9B50051E689 /* JoinGameView.swift in Sources */,

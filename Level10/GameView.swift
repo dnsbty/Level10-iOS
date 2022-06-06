@@ -28,7 +28,7 @@ struct GameView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     ForEach(viewModel.players) { player in
                         HStack(spacing: 6) {
-                            StatusIndicator(status: viewModel.connectedPlayers.contains(player.id) ? .online : .offline)
+                            StatusIndicator(status: viewModel.isConnected(playerId: player.id) ? .online : .offline)
                                 .frame(width: 10, height: 10, alignment: .center)
                             
                             Text(player.id == UserManager.shared.id ? "You" : player.name)
@@ -93,11 +93,6 @@ struct GameView: View {
                 
                 // MARK: Player table
                 
-//                    if !viewModel.completedLevel {
-//                        self.ownTable(geometry)
-//                            .frame(maxHeight: 100)
-//                            .padding()
-//                    }
                 if !viewModel.completedLevel {
                     self.ownTable()
                         .frame(maxHeight: 100)
