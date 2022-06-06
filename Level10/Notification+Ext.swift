@@ -29,5 +29,6 @@ extension Notification.Name {
     static let gameDidStart = Notification.Name("gameDidStart")
     static let handDidUpdate = Notification.Name("handDidUpdate")
     static let roundDidFinish = Notification.Name("roundDidFinish")
+    static let roundDidStart = Notification.Name("roundDidStart")
     static let tableDidUpdate = Notification.Name("tableDidUpdate")
 }

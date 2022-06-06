@@ -203,42 +203,66 @@ struct GameView: View {
             let levelGroups = viewModel.levelGroups(player: UserManager.shared.id ?? "b95e86d7-82d5-4444-9322-2a7405f64fb8")
             
             ForEach(levelGroups.indices, id: \.self) { index in
-                if let group = viewModel.tempTable[index] {
-                    Button {
-                        onTapSelfTable(groupIndex: index)
-                    } label: {
+                Button {
+                    onTapSelfTable(groupIndex: index)
+                } label: {
+                    if let group = viewModel.tempTable[index] {
                         ZStack {
                             RoundedRectangle(cornerRadius: 8)
                                 .foregroundColor(.violet900)
                                 .overlay {
-                                    GeometryReader { geometry in
-                                        HStack(spacing: group.count >= 12 || group.count < 5 ? -3 : -4) {
-                                            ForEach(group.indices, id: \.self) { cardIndex in
-                                                CardView(card: group[cardIndex])
-                                                    .scaleEffect(0.5)
-                                                    .frame(width: (geometry.size.width - 10) / CGFloat(group.count))
+                                    VStack(spacing: 2) {
+                                        Text(levelGroups[index].toString())
+                                            .font(.system(size: 14.0, weight: .regular , design: .rounded))
+                                            .foregroundColor(.violet300)
+                                            .padding(.top, 4)
+                                        
+                                        GeometryReader { geometry in
+                                            HStack(spacing: group.count >= 12 || group.count < 5 ? -3 : -4) {
+                                                ForEach(group.indices, id: \.self) { cardIndex in
+                                                    CardView(card: group[cardIndex])
+                                                        .scaleEffect(0.5)
+                                                        .frame(width: (geometry.size.width - 10) / CGFloat(group.count))
+                                                }
                                             }
+                                            .frame(width: geometry.size.width - 20, height: 60)
+                                            .padding(.horizontal, 10)
                                         }
-                                        .frame(width: geometry.size.width - 20, height: 80)
-                                        .padding(.horizontal, 10)
+                                    }
+                                    .overlay(alignment: .topTrailing) {
+                                        Button {
+                                            viewModel.clearTempTableGroup(index)
+                                        } label: {
+                                            ZStack {
+                                                Circle()
+                                                    .frame(width: 18, height: 18)
+                                                    .foregroundColor(.violet400)
+                                                
+                                                Image(systemName: "xmark")
+                                                    .foregroundColor(.violet900)
+                                                    .imageScale(.small)
+                                                    .frame(width: 14, height: 14)
+                                            }
+                                            .padding(2)
+                                            .frame(width: 44, height: 44)
+                                            .offset(x: 10, y: -10)
+                                        }
                                     }
                                 }
                         }
-                        .frame(height: 80)
+                        .frame(height: 90)
+                    } else {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .foregroundColor(.violet900)
+                            
+                            Text(levelGroups[index].toString())
+                                .font(.system(size: 16.0, weight: .semibold, design: .rounded))
+                                .foregroundColor(.violet300)
+                        }
+                        .frame(height:90)
                     }
-                } else {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8)
-                            .foregroundColor(.violet900)
-                        
-                        Text(levelGroups[index].toString())
-                            .font(.system(size: 16.0, weight: .semibold, design: .rounded))
-                            .foregroundColor(.violet300)
-                    }
-                    .frame(height:80)
                 }
-                
-                
             }
         }
     }
@@ -335,7 +359,7 @@ struct GameView_Previews: PreviewProvider {
         ]
         viewModel.levels = [
             "b95e86d7-82d5-4444-9322-2a7405f64fb8": Level(groups: [
-                LevelGroup(count: 7, type: .run)
+                LevelGroup(count: 3, type: .set), LevelGroup(count: 4, type: .run)
             ]),
             "cf34b6bf-b452-400a-a7f3-d5537d5a73b4": Level(groups: [
                 LevelGroup(count: 3, type: .set), LevelGroup(count: 3, type: .set)
@@ -389,20 +413,6 @@ struct GameView_Previews: PreviewProvider {
             ]
         ]
         viewModel.tempTable = [
-            0: [
-                Card(color: .red, value: .one),
-                Card(color: .yellow, value: .two),
-                Card(color: .green, value: .three),
-                Card(color: .blue, value: .four),
-                Card(color: .black, value: .five),
-                Card(color: .red, value: .six),
-                Card(color: .yellow, value: .seven),
-                Card(color: .green, value: .eight),
-                Card(color: .blue, value: .nine),
-                Card(color: .black, value: .ten),
-                Card(color: .red, value: .eleven),
-                Card(color: .yellow, value: .twelve)
-            ],
             1: [
                 Card(color: .red, value: .one),
                 Card(color: .yellow, value: .two),

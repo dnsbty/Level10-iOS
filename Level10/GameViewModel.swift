@@ -8,7 +8,6 @@
 import Foundation
 
 class GameViewModel: ObservableObject {
-    @Published var completedLevel = false
     @Published var connectedPlayers = Set<String>()
     @Published var currentPlayer: String?
     @Published var currentScreen = Screen.home
@@ -24,13 +23,13 @@ class GameViewModel: ObservableObject {
     @Published var table: [String: [[Card]]] = [:]
     @Published var tempTable: [Int: [Card]] = [:]
     
+    var completedLevel = false
     var drawnCard: Card?
     var hasDrawn = false
     var isCreator = false
     var isReadyForNextRound = false
     var joinCode: String?
     var levels: [String: Level] = [:]
-    var playersById: [String: Player] = [:]
     var roundNumber = 1
     var scores: [Score] = []
     
@@ -73,6 +72,7 @@ class GameViewModel: ObservableObject {
         NotificationCenter.default.addObserver(self, selector: #selector(onGameStart), name: .gameDidStart, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onHandUpdate), name: .handDidUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onRoundFinished), name: .roundDidFinish, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onRoundStart), name: .roundDidStart, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onTableUpdate), name: .tableDidUpdate, object: nil)
         
         maybeConnectToExistingGame()
@@ -256,6 +256,7 @@ class GameViewModel: ObservableObject {
               let hasDrawn = notification.userInfo?["hasDrawn"] as? Bool,
               let levels = notification.userInfo?["levels"] as? [String: Level],
               let players = notification.userInfo?["players"] as? [Player],
+              let playersReady = notification.userInfo?["playersReady"] as? Set<String>,
               let roundNumber = notification.userInfo?["roundNumber"] as? Int,
               let scores = notification.userInfo?["scores"] as? [Score],
               let table = notification.userInfo?["table"] as? [String: [[Card]]]
@@ -284,7 +285,7 @@ class GameViewModel: ObservableObject {
         DispatchQueue.main.async { [self] in
             self.completedLevel = completedLevel
             self.currentPlayer = currentPlayer
-            currentScreen = .game
+            currentScreen = playersReady.contains(UserManager.shared.id ?? "") ? .scoring : .game
             discardPileTopCard = discardTop
             drawnCard = newCard
             self.hand = hand
@@ -293,6 +294,7 @@ class GameViewModel: ObservableObject {
             self.levels = levels
             self.newCard = newCard
             self.players = players
+            self.playersReady = playersReady
             self.roundNumber = roundNumber
             self.roundWinner = roundWinner
             self.scores = scores.sorted()
@@ -368,6 +370,38 @@ class GameViewModel: ObservableObject {
         DispatchQueue.main.async {
             self.roundWinner = winner
             self.scores = scores.sorted()
+        }
+    }
+    
+    @objc private func onRoundStart(_ notification: Notification) {
+        guard let currentPlayer = notification.userInfo?["currentPlayer"] as? String,
+              let hand = notification.userInfo?["hand"] as? [Card],
+              let handCounts = notification.userInfo?["handCounts"] as? [String: Int],
+              let levels = notification.userInfo?["levels"] as? [String: Level],
+              let roundNumber = notification.userInfo?["roundNumber"] as? Int
+        else { return }
+        
+        let discardTop = notification.userInfo?["discardTop"] as? Card
+        
+        DispatchQueue.main.async { [self] in
+            self.completedLevel = false
+            self.currentPlayer = currentPlayer
+            currentScreen = .game
+            discardPileTopCard = discardTop
+            drawnCard = nil
+            self.hand = hand.sorted()
+            self.handCounts = handCounts
+            hasDrawn = false
+            self.levels = levels
+            newCard = nil
+            newCardSelected = false
+            playersReady.removeAll()
+            self.roundNumber = roundNumber
+            roundWinner = nil
+            self.scores = scores.sorted()
+            selectedIndices = []
+            table = [:]
+            tempTable = [:]
         }
     }
     

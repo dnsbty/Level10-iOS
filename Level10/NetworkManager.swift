@@ -336,6 +336,7 @@ final class NetworkManager {
             else { return }
             
             let discardTopDict = message.payload["discard_top"] as? [String: String]
+            let playersReady = message.payload["players_ready"] as? [String] ?? []
             let roundWinnerDict = message.payload["round_winner"] as? [String: String]
             let scoreDicts = message.payload["scores"] as? [[String: Any]]
             
@@ -366,6 +367,7 @@ final class NetworkManager {
                 "hasDrawn": hasDrawn,
                 "levels": levels,
                 "players": players,
+                "playersReady": Set(playersReady),
                 "roundNumber": roundNumber,
                 "scores": scores,
                 "table": table
@@ -391,17 +393,6 @@ final class NetworkManager {
             NotificationCenter.default.post(name: .currentPlayerDidUpdate, object: nil, userInfo: ["player": player])
         }
         
-        gameChannel.on("round_finished") { [weak self] message in
-            guard let self = self,
-                  let scoreDicts = message.payload["scores"] as? [[String: Any]],
-                  let winnerDict = message.payload["winner"] as? [String: String],
-                  let winner = self.playerFromDict(winnerDict)
-            else { return }
-            
-            let scores = scoreDicts.compactMap(self.scoreFromDict)
-            NotificationCenter.default.post(name: .roundDidFinish, object: nil, userInfo: ["scores": scores, "winner": winner])
-        }
-        
         gameChannel.on("players_ready") { message in
             guard let playersReady = message.payload["players"] as? [String] else { return }
             NotificationCenter.default.post(name: .didReceivePlayersReadyUpdate, object: nil, userInfo: ["playersReady": Set(playersReady)])
@@ -414,6 +405,43 @@ final class NetworkManager {
             
             let players: [Player] = playerDicts.compactMap(self.playerFromDict)
             NotificationCenter.default.post(name: .didReceiveUpdatedPlayerList, object: nil, userInfo: ["players": players])
+        }
+        
+        gameChannel.on("round_finished") { [weak self] message in
+            guard let self = self,
+                  let scoreDicts = message.payload["scores"] as? [[String: Any]],
+                  let winnerDict = message.payload["winner"] as? [String: String],
+                  let winner = self.playerFromDict(winnerDict)
+            else { return }
+            
+            let scores = scoreDicts.compactMap(self.scoreFromDict)
+            NotificationCenter.default.post(name: .roundDidFinish, object: nil, userInfo: ["scores": scores, "winner": winner])
+        }
+        
+        gameChannel.on("round_started") { [weak self] message in
+            guard let self = self,
+                  let currentPlayer = message.payload["current_player"] as? String,
+                  let handCounts = message.payload["hand_counts"] as? [String: Int],
+                  let handDicts = message.payload["hand"] as? [[String: String]],
+                  let levelDicts = message.payload["levels"] as? [String: [[String: Any]]],
+                  let roundNumber = message.payload["round_number"] as? Int
+            else { return }
+            
+            let discardTopDict = message.payload["discard_top"] as? [String: String]
+            let hand = handDicts.compactMap(self.cardFromDict)
+            let levels = self.levelsFromDict(levelDicts)
+            
+            var info: [AnyHashable: Any] = [
+                "currentPlayer": currentPlayer,
+                "hand": hand,
+                "handCounts": handCounts,
+                "levels": levels,
+                "roundNumber": roundNumber
+            ]
+            
+            if let discardTopDict = discardTopDict { info["discardTop"] = self.cardFromDict(discardTopDict) }
+            
+            NotificationCenter.default.post(name: .roundDidStart, object: nil, userInfo: info)
         }
         
         gameChannel.on("table_updated") { [weak self] message in
