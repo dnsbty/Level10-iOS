@@ -406,7 +406,10 @@ class GameViewModel: ObservableObject {
     }
     
     @objc private func onSetTable(_ notification: Notification) {
-        DispatchQueue.main.async { self.completedLevel = true }
+        DispatchQueue.main.async {
+            self.completedLevel = true
+            self.tempTable = [:]
+        }
     }
     
     @objc private func onTableUpdate(_ notification: Notification) {
