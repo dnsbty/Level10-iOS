@@ -18,7 +18,7 @@ class GameViewModel: ObservableObject {
     @Published var newCard: Card?
     @Published var newCardSelected = false
     @Published var players: [Player] = []
-    @Published var readyPlayers = Set<String>()
+    @Published var playersReady = Set<String>()
     @Published var roundWinner: Player?
     @Published var selectedIndices = Set<Int>()
     @Published var table: [String: [[Card]]] = [:]
@@ -64,6 +64,7 @@ class GameViewModel: ObservableObject {
         NotificationCenter.default.addObserver(self, selector: #selector(onCardDrawError), name: .didReceiveCardDrawError, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameCreationError), name: .didReceiveGameCreationError, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameStateUpdate), name: .didReceiveGameState, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onPlayersReadyUpdate), name: .didReceivePlayersReadyUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onPresenceUpdate), name: .didReceivePresenceUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onHandCountsUpdated), name: .didReceiveUpdatedHandCounts, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onPlayerListUpdate), name: .didReceiveUpdatedPlayerList, object: nil)
@@ -127,6 +128,10 @@ class GameViewModel: ObservableObject {
     
     func isConnected(playerId: String) -> Bool {
         return connectedPlayers.contains(playerId)
+    }
+    
+    func isReady(playerId: String) -> Bool {
+        return playersReady.contains(playerId)
     }
     
     func levelGroups(player: String) -> [LevelGroup] {
@@ -343,6 +348,11 @@ class GameViewModel: ObservableObject {
     @objc private func onPlayerListUpdate(_ notification: Notification) {
         guard let players = notification.userInfo?["players"] as? [Player] else { return }
         DispatchQueue.main.async { self.players = players }
+    }
+    
+    @objc private func onPlayersReadyUpdate(_ notification: Notification) {
+        guard let playersReady = notification.userInfo?["playersReady"] as? Set<String> else { return }
+        DispatchQueue.main.async { self.playersReady = playersReady }
     }
     
     @objc private func onPresenceUpdate(_ notification: Notification) {

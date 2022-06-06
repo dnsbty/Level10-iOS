@@ -235,6 +235,13 @@ final class NetworkManager {
     }
     
     /**
+     Marks the player as ready to start the next round.
+     */
+    func markReady() {
+        gameChannel?.push("mark_ready", payload: [:])
+    }
+    
+    /**
      Reconnect to a game that the player has already created or joined.
      
      - Parameter withCode: The join code for the game to which connection should be re-established.
@@ -393,6 +400,11 @@ final class NetworkManager {
             
             let scores = scoreDicts.compactMap(self.scoreFromDict)
             NotificationCenter.default.post(name: .roundDidFinish, object: nil, userInfo: ["scores": scores, "winner": winner])
+        }
+        
+        gameChannel.on("players_ready") { message in
+            guard let playersReady = message.payload["players"] as? [String] else { return }
+            NotificationCenter.default.post(name: .didReceivePlayersReadyUpdate, object: nil, userInfo: ["playersReady": Set(playersReady)])
         }
         
         gameChannel.on("players_updated") { [weak self] message in

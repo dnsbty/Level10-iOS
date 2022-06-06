@@ -44,18 +44,31 @@ struct ScoreView: View {
                                 .font(.system(size: 30.0, weight: .semibold, design: .rounded))
                                 .foregroundColor(.white)
                             
-                            StatusIndicator(status: viewModel.isConnected(playerId: score.playerId) ? .online : .offline)
+                            if viewModel.isReady(playerId: score.playerId) {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(.white)
+                                    .frame(width: 12, height: 12, alignment: .leading)
+                            } else {
+                                StatusIndicator(status: viewModel.isConnected(playerId: score.playerId) ? .online : .offline)
+                            }
                         }
                     }
                 }
-                .padding(EdgeInsets(top: 48, leading: 24, bottom: 0, trailing: 24))
+                .padding(EdgeInsets(top: 48, leading: 24, bottom: 48, trailing: 24))
                 
                 Spacer()
                 
-                Button {
-                    // Mark player as ready
-                } label: {
-                    L10Button(text: "Next Round", type: .primary).padding(.horizontal)
+                if viewModel.isReady(playerId: UserManager.shared.id ?? "b95e86d7-82d5-4444-9322-2a7405f64fb8") {
+                    Text("Waiting for others...")
+                        .font(.system(size: 24.0, weight: .semibold, design: .rounded))
+                        .foregroundColor(.violet200)
+                        .padding(.bottom)
+                } else {
+                    Button {
+                        NetworkManager.shared.markReady()
+                    } label: {
+                        L10Button(text: "Next Round", type: .primary).padding(.horizontal)
+                    }
                 }
                 
                 Button {
@@ -86,6 +99,11 @@ struct ScoreView_Previews: PreviewProvider {
             Player(name: "Brett", id: "679fbdde-eafa-46de-bc40-40165f68b218"),
             Player(name: "Cari", id: "211a7eda-a033-46f7-9c9a-b98041380cd1"),
             Player(name: "John", id: "cc7a02b6-4cce-4436-bf24-c7523eb7172f")
+        ]
+        
+        viewModel.playersReady = [
+            "b95e86d7-82d5-4444-9322-2a7405f64fb8",
+            "af225f65-7e29-4f08-b1e2-ac67abec6ab0"
         ]
         
         viewModel.scores = [

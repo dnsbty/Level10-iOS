@@ -19,6 +19,7 @@ extension Notification.Name {
     static let didReceiveDiscardError = Notification.Name("didReceiveDiscardError")
     static let didReceiveGameCreationError = Notification.Name("didReceiveGameCreationError")
     static let didReceiveGameState = Notification.Name("didReceiveGameState")
+    static let didReceivePlayersReadyUpdate = Notification.Name("didReceivePlayersReadyUpdate")
     static let didReceivePresenceUpdate = Notification.Name("didReceivePresenceUpdate")
     static let didReceiveTableSetError = Notification.Name("didReceiveTableSetError")
     static let didReceiveUpdatedHandCounts = Notification.Name("didReceiveUpdatedHandCounts")
