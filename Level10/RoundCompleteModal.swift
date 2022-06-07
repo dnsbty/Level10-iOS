@@ -10,6 +10,7 @@ import SwiftUI
 struct RoundCompleteModal: View {
     @Binding var currentScreen: Screen
     var completedLevel: Bool
+    var gameOver: Bool
     var winner: Player
     
     var body: some View {
@@ -20,7 +21,7 @@ struct RoundCompleteModal: View {
                 .frame(height: 260)
             
             VStack(spacing: 32) {
-                Text("Round Complete \(completeEmoji(completedLevel))")
+                Text(titleText())
                     .font(.system(size: 24.0, weight: .semibold, design: .rounded))
                     .foregroundColor(.white)
                     .padding(.top, 32)
@@ -32,9 +33,17 @@ struct RoundCompleteModal: View {
                 Button {
                     currentScreen = .scoring
                 } label: {
-                    L10Button(text: "Check the Scores", type: .primary).padding(.horizontal)
+                    L10Button(text: buttonText(), type: .primary).padding(.horizontal)
                 }
             }
+        }
+    }
+    
+    private func buttonText() -> String {
+        if gameOver {
+            return "See the final scores"
+        } else {
+            return "Check the scores"
         }
     }
     
@@ -53,10 +62,18 @@ struct RoundCompleteModal: View {
         if winner.id == UserManager.shared.id { return "You won the round!" }
         return "\(winner.name) won the round."
     }
+    
+    private func titleText() -> String {
+        if gameOver {
+            return "Game over \(completeEmoji(completedLevel))"
+        } else {
+            return "Round Complete \(completeEmoji(completedLevel))"
+        }
+    }
 }
 
 struct RoundCompleteModal_Previews: PreviewProvider {
     static var previews: some View {
-        RoundCompleteModal(currentScreen: .constant(.game), completedLevel: true, winner: Player(name: "Dennis", id: "1234"))
+        RoundCompleteModal(currentScreen: .constant(.game), completedLevel: true, gameOver: true, winner: Player(name: "Dennis", id: "1234"))
     }
 }

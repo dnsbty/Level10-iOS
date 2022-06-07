@@ -296,6 +296,17 @@ final class NetworkManager {
             NotificationCenter.default.post(name: .didReceivePresenceUpdate, object: nil, userInfo: ["connectedUsers": connectedUsers])
         }
         
+        gameChannel.on("game_finished") { [weak self] message in
+            guard let self = self,
+                  let scoreDicts = message.payload["scores"] as? [[String: Any]],
+                  let winnerDict = message.payload["round_winner"] as? [String: String],
+                  let winner = self.playerFromDict(winnerDict)
+            else { return }
+            
+            let scores = scoreDicts.compactMap(self.scoreFromDict)
+            NotificationCenter.default.post(name: .roundDidFinish, object: nil, userInfo: ["scores": scores, "roundWinner": winner])
+        }
+        
         gameChannel.on("game_started") { [weak self] message in
             guard let self = self,
                   let currentPlayer = message.payload["current_player"] as? String,
@@ -326,6 +337,7 @@ final class NetworkManager {
         gameChannel.on("latest_state") { [weak self] message in
             guard let self = self,
                   let currentPlayer = message.payload["current_player"] as? String,
+                  let gameOver = message.payload["game_over"] as? Bool,
                   let handCounts = message.payload["hand_counts"] as? [String: Int],
                   let handDicts = message.payload["hand"] as? [[String: String]],
                   let hasDrawn = message.payload["has_drawn"] as? Bool,
@@ -362,6 +374,7 @@ final class NetworkManager {
             // Broadcast the latest state
             var info: [AnyHashable: Any] = [
                 "currentPlayer": currentPlayer,
+                "gameOver": gameOver,
                 "hand": hand,
                 "handCounts": handCounts,
                 "hasDrawn": hasDrawn,

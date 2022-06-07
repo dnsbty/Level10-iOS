@@ -25,6 +25,7 @@ class GameViewModel: ObservableObject {
     
     var completedLevel = false
     var drawnCard: Card?
+    var gameOver = false
     var hasDrawn = false
     var isCreator = false
     var isReadyForNextRound = false
@@ -69,6 +70,7 @@ class GameViewModel: ObservableObject {
         NotificationCenter.default.addObserver(self, selector: #selector(onPlayerListUpdate), name: .didReceiveUpdatedPlayerList, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onSetTable), name: .didSetTable, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onDiscardTopChange), name: .discardTopDidChange, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onGameOver), name: .gameDidFinish, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameStart), name: .gameDidStart, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onHandUpdate), name: .handDidUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onRoundFinished), name: .roundDidFinish, object: nil)
@@ -223,6 +225,18 @@ class GameViewModel: ObservableObject {
         // TODO: Show an alert if game creation fails
     }
     
+    @objc private func onGameOver(_ notification: Notification) {
+        guard let winner = notification.userInfo?["roundWinner"] as? Player,
+              let scores = notification.userInfo?["scores"] as? [Score]
+        else { return }
+        
+        DispatchQueue.main.async {
+            self.gameOver = true
+            self.roundWinner = winner
+            self.scores = scores.sorted()
+        }
+    }
+    
     @objc private func onGameStart(_ notification: Notification) {
         guard let currentPlayer = notification.userInfo?["currentPlayer"] as? String,
               let discardTop = notification.userInfo?["discardTop"] as? Card,
@@ -238,6 +252,7 @@ class GameViewModel: ObservableObject {
             self.currentPlayer = currentPlayer
             currentScreen = .game
             discardPileTopCard = discardTop
+            gameOver = false
             self.hand = hand.sorted()
             self.handCounts = handCounts
             self.levels = levels
@@ -251,6 +266,7 @@ class GameViewModel: ObservableObject {
     
     @objc private func onGameStateUpdate(_ notification: Notification) {
         guard let currentPlayer = notification.userInfo?["currentPlayer"] as? String,
+              let gameOver = notification.userInfo?["gameOver"] as? Bool,
               var hand = notification.userInfo?["hand"] as? [Card],
               let handCounts = notification.userInfo?["handCounts"] as? [String: Int],
               let hasDrawn = notification.userInfo?["hasDrawn"] as? Bool,
@@ -288,6 +304,7 @@ class GameViewModel: ObservableObject {
             currentScreen = playersReady.contains(UserManager.shared.id ?? "") ? .scoring : .game
             discardPileTopCard = discardTop
             drawnCard = newCard
+            self.gameOver = gameOver
             self.hand = hand
             self.handCounts = handCounts
             self.hasDrawn = hasDrawn

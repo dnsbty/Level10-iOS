@@ -140,6 +140,7 @@ struct GameView: View {
                     
                     RoundCompleteModal(currentScreen: $viewModel.currentScreen,
                                        completedLevel: viewModel.completedLevel,
+                                       gameOver: viewModel.gameOver,
                                        winner: winner)
                 }.ignoresSafeArea()
             }
