@@ -58,6 +58,7 @@ class GameViewModel: ObservableObject {
         NotificationCenter.default.addObserver(self, selector: #selector(onAddToTable), name: .didAddToTable, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onCreateGame), name: .didCreateGame, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onDrawCard), name: .didDrawCard, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onEndGame), name: .didEndGame, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onJoinGame), name: .didJoinGame, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onLeaveGame), name: .didLeaveGame, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onAddToTableError), name: .didReceiveAddToTableError, object: nil)
@@ -153,6 +154,8 @@ class GameViewModel: ObservableObject {
         }
     }
     
+    // MARK: Private functions
+    
     private func maybeConnectToExistingGame() {
         if let joinCode = UserDefaults.standard.string(forKey: joinCodeKey) {
             Task {
@@ -163,6 +166,35 @@ class GameViewModel: ObservableObject {
                 }
             }
         }
+    }
+    
+    private func reset() {
+        saveJoinCode(nil)
+        
+        completedLevel = false
+        connectedPlayers.removeAll()
+        currentPlayer = nil
+        currentScreen = .home
+        discardPileTopCard = nil
+        drawnCard = nil
+        gameOver = false
+        hand = []
+        handCounts = [:]
+        hasDrawn = false
+        isCreator = false
+        isReadyForNextRound = false
+        joinCode = nil
+        levels = [:]
+        newCard = nil
+        newCardSelected = false
+        players = []
+        playersReady.removeAll()
+        roundNumber = 1
+        roundWinner = nil
+        scores = []
+        selectedIndices.removeAll()
+        table = [:]
+        tempTable = [:]
     }
     
     private func saveJoinCode(_ joinCode: String?) {
@@ -221,6 +253,10 @@ class GameViewModel: ObservableObject {
         }
     }
     
+    @objc private func onEndGame(_ notification: Notification) {
+        DispatchQueue.main.async { self.reset() }
+    }
+    
     @objc private func onGameCreationError(_ notification: Notification) {
         // TODO: Show an alert if game creation fails
     }
@@ -257,6 +293,7 @@ class GameViewModel: ObservableObject {
             self.handCounts = handCounts
             self.levels = levels
             self.players = players
+            playersReady.removeAll()
             roundNumber = 1
             roundWinner = nil
             tempTable = [:]
@@ -355,13 +392,7 @@ class GameViewModel: ObservableObject {
     }
     
     @objc private func onLeaveGame(_ notification: Notification) {
-        DispatchQueue.main.async { [self] in
-            saveJoinCode(nil)
-            players = []
-            joinCode = nil
-            connectedPlayers = Set<String>()
-            currentScreen = Screen.home
-        }
+        DispatchQueue.main.async { self.reset() }
     }
     
     @objc private func onPlayerListUpdate(_ notification: Notification) {
@@ -371,6 +402,7 @@ class GameViewModel: ObservableObject {
     
     @objc private func onPlayersReadyUpdate(_ notification: Notification) {
         guard let playersReady = notification.userInfo?["playersReady"] as? Set<String> else { return }
+        if gameOver && playersReady.contains(UserManager.shared.id ?? "") { NetworkManager.shared.endGame() }
         DispatchQueue.main.async { self.playersReady = playersReady }
     }
     
@@ -384,8 +416,9 @@ class GameViewModel: ObservableObject {
               let scores = notification.userInfo?["scores"] as? [Score]
         else { return }
         
-        DispatchQueue.main.async {
-            self.roundWinner = winner
+        DispatchQueue.main.async { [self] in
+            playersReady.removeAll()
+            roundWinner = winner
             self.scores = scores.sorted()
         }
     }

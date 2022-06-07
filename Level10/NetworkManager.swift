@@ -207,6 +207,12 @@ final class NetworkManager {
             }
     }
     
+    func endGame() {
+        gameChannel?.leave()
+        gameChannel = nil
+        NotificationCenter.default.post(name: .didEndGame, object: nil)
+    }
+    
     /**
      Join an existing game on the server.
      

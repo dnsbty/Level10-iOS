@@ -63,23 +63,31 @@ struct ScoreView: View {
                 
                 Spacer()
                 
-                if viewModel.isReady(playerId: UserManager.shared.id ?? "b95e86d7-82d5-4444-9322-2a7405f64fb8") {
-                    Text("Waiting for others...")
-                        .font(.system(size: 24.0, weight: .semibold, design: .rounded))
-                        .foregroundColor(.violet200)
-                        .padding(.bottom)
-                } else {
+                if viewModel.gameOver {
                     Button {
                         NetworkManager.shared.markReady()
                     } label: {
-                        L10Button(text: "Next Round", type: .primary).padding(.horizontal)
+                        L10Button(text: "End Game", type: .primary).padding()
                     }
-                }
-                
-                Button {
-                    NetworkManager.shared.leaveGame()
-                } label: {
-                    L10Button(text: "Leave Game", type: .ghost)
+                } else {
+                    if viewModel.isReady(playerId: UserManager.shared.id ?? "b95e86d7-82d5-4444-9322-2a7405f64fb8") {
+                        Text("Waiting for others...")
+                            .font(.system(size: 24.0, weight: .semibold, design: .rounded))
+                            .foregroundColor(.violet200)
+                            .padding(.bottom)
+                    } else {
+                        Button {
+                            NetworkManager.shared.markReady()
+                        } label: {
+                            L10Button(text: "Next Round", type: .primary).padding(.horizontal)
+                        }
+                    }
+                    
+                    Button {
+                        NetworkManager.shared.leaveGame()
+                    } label: {
+                        L10Button(text: "Leave Game", type: .ghost)
+                    }
                 }
             }
         }
@@ -134,7 +142,7 @@ struct ScoreView_Previews: PreviewProvider {
         ]
         
         viewModel.scores = [
-            Score(level: 10, playerId: "b95e86d7-82d5-4444-9322-2a7405f64fb8", points: 200),
+            Score(level: 11, playerId: "b95e86d7-82d5-4444-9322-2a7405f64fb8", points: 200),
             Score(level: 10, playerId: "af225f65-7e29-4f08-b1e2-ac67abec6ab0", points: 45),
             Score(level: 9, playerId: "20fc38f2-8657-47ca-8b64-72e3cc021d77", points: 120),
             Score(level: 8, playerId: "679fbdde-eafa-46de-bc40-40165f68b218", points: 165),

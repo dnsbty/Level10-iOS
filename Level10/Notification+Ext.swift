@@ -12,6 +12,7 @@ extension Notification.Name {
     static let didAddToTable = Notification.Name("didAddToTable")
     static let didCreateGame = Notification.Name("didCreateGame")
     static let didDrawCard = Notification.Name("didDrawCard")
+    static let didEndGame = Notification.Name("didEndGame")
     static let didJoinGame = Notification.Name("didJoinGame")
     static let didLeaveGame = Notification.Name("didLeaveGame")
     static let didReceiveAddToTableError = Notification.Name("didReceiveAddToTableError")
