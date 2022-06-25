@@ -59,7 +59,6 @@ final class NetworkManager {
                 default:
                     print("Error \(error.code): \(error.localizedDescription)")
                     NotificationCenter.default.post(name: .connectionDidFail, object: nil, userInfo: ["error": error])
-                    socket.disconnect()
                 }
             }
         }
@@ -303,6 +302,7 @@ final class NetworkManager {
                 NotificationCenter.default.post(name: .didSetTable, object: nil)
             }
             .receive("error") { response in
+                print("Table set error: ", response.payload["response"] ?? "")
                 NotificationCenter.default.post(name: .didReceiveTableSetError, object: nil, userInfo: ["error": response.payload["response"] ?? ""])
             }
     }

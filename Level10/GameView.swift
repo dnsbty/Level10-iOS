@@ -104,7 +104,7 @@ struct GameView: View {
                 HStack {
                     if let newCard = viewModel.newCard {
                         Button {
-                            if viewModel.isCurrentPlayer {
+                            if viewModel.isCurrentPlayer && viewModel.hasDrawn {
                                 viewModel.newCardSelected = !viewModel.newCardSelected
                             }
                         } label: {
@@ -118,7 +118,7 @@ struct GameView: View {
                     LazyVGrid(columns: gridItemLayout, spacing: 8.0) {
                         ForEach(viewModel.hand.indices, id: \.self) { i in
                             Button {
-                                if viewModel.isCurrentPlayer {
+                                if viewModel.isCurrentPlayer && viewModel.hasDrawn {
                                     viewModel.toggleIndexSelected(i)
                                 }
                             } label: {
