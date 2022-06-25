@@ -48,8 +48,24 @@ final class NetworkManager {
         lobbyChannel = socket.channel("game:lobby")
         socket.onOpen { print("Socket opened") }
         socket.onClose { print("Socket closed") }
-        socket.onError { (error) in print("Socket error", error) }
+        socket.onError { error in
+            if let error = error as? URLError {
+                switch error.code {
+                case .badServerResponse:
+                    // This response is returned whenever the server denies the connection.
+                    // This is usually because the auth token is invalid.
+                    print("Server denied connection")
+                    UserManager.shared.refreshToken()
+                default:
+                    print("Error \(error.code): \(error.localizedDescription)")
+                    NotificationCenter.default.post(name: .connectionDidFail, object: nil, userInfo: ["error": error])
+                    socket.disconnect()
+                }
+            }
+        }
 //        socket.logger = { message in print("LOG:", message) }
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(handleSetToken), name: .didSetToken, object: nil)
     }
     
     /**
@@ -521,5 +537,12 @@ final class NetworkManager {
         else { return nil }
         
         return Score(level: level, playerId: playerId, points: points)
+    }
+    
+    // MARK: Notification handlers
+    
+    @objc private func handleSetToken(_ notification: Notification) {
+        guard let token = notification.userInfo?["token"] as? String else { return }
+        authToken = token
     }
 }

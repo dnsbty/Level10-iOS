@@ -25,6 +25,7 @@ final class UserManager {
     private(set) var id: String? = nil
     private(set) var token: String? = nil
     
+    private var creatingUser = false
     private let idKey = "userId"
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "UserManager")
     private let tag = "com.dennisbeatty.Level10.userToken".data(using: .utf8)!
@@ -79,9 +80,29 @@ final class UserManager {
         UserDefaults.standard.set(value, forKey: key.rawValue)
     }
     
+    /**
+     Remove the existing token and create a new one to replace it.
+     
+     Emits the .didSetToken Notification when successful, with the token in the userInfo dictionary.
+     */
+    func refreshToken() {
+        Task { [weak self] in
+            guard let self = self else { return }
+            let _ = removeToken()
+            if let _ = try? await createUser(), let token = self.token {
+                NotificationCenter.default.post(name: .didSetToken, object: nil, userInfo: ["token": token])
+            }
+        }
+    }
+    
     // MARK: Private functions
     
     private func createUser() async throws {
+        // Make sure that we're only creating one user at a time to avoid race conditions
+        if creatingUser { return }
+        creatingUser = true
+        defer { creatingUser = false }
+        
         do {
             let user = try await NetworkManager.shared.createUser()
             if self.setToken(user.token) {

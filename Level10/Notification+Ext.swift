@@ -8,6 +8,7 @@
 import Foundation
 
 extension Notification.Name {
+    static let connectionDidFail = Notification.Name("connectionDidFail")
     static let currentPlayerDidUpdate = Notification.Name("currentPlayerDidUpdate")
     static let didAddToTable = Notification.Name("didAddToTable")
     static let didCreateGame = Notification.Name("didCreateGame")
@@ -26,6 +27,7 @@ extension Notification.Name {
     static let didReceiveUpdatedHandCounts = Notification.Name("didReceiveUpdatedHandCounts")
     static let didReceiveUpdatedPlayerList = Notification.Name("didReceiveUpdatedPlayerList")
     static let didSetTable = Notification.Name("didSetTable")
+    static let didSetToken = Notification.Name("didSetToken")
     static let discardTopDidChange = Notification.Name("discardTopDidChange")
     static let gameDidFinish = Notification.Name("gameDidFinish")
     static let gameDidStart = Notification.Name("gameDidStart")
