@@ -31,6 +31,7 @@ extension Notification.Name {
     static let discardTopDidChange = Notification.Name("discardTopDidChange")
     static let gameDidFinish = Notification.Name("gameDidFinish")
     static let gameDidStart = Notification.Name("gameDidStart")
+    static let gameJoinError = Notification.Name("gameJoinError")
     static let handDidUpdate = Notification.Name("handDidUpdate")
     static let roundDidFinish = Notification.Name("roundDidFinish")
     static let roundDidStart = Notification.Name("roundDidStart")

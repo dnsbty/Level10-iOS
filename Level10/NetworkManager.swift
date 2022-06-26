@@ -14,6 +14,12 @@ struct User: Codable {
     let token: String
 }
 
+enum GameConnectError: Error {
+    case alreadyStarted
+    case full
+    case notFound
+    case unknownError(String)
+}
 
 enum NetworkError: Error {
     case badRequest
@@ -124,8 +130,13 @@ final class NetworkManager {
             .receive("ok") { response in
                 guard let joinCode = response.payload["joinCode"] as? String else { return }
                 self.gameChannel = socket.channel("game:\(joinCode)")
-                self.connectToGame()
-                NotificationCenter.default.post(name: .didCreateGame, object: nil, userInfo: ["joinCode": joinCode])
+                self.connectToGame() { error in
+                    if let error = error {
+                        print("Error connecting to created game", error)
+                        return
+                    }
+                    NotificationCenter.default.post(name: .didCreateGame, object: nil, userInfo: ["joinCode": joinCode])
+                }
             }
             .receive("error") { response in
                 NotificationCenter.default.post(name: .didReceiveGameCreationError, object: nil, userInfo: ["error": response.payload["response"] ?? ""])
@@ -241,8 +252,13 @@ final class NetworkManager {
         if !socket.isConnected { await connectSocket() }
         let params = ["displayName": name]
         self.gameChannel = socket.channel("game:\(joinCode)", params: params)
-        self.connectToGame()
-        NotificationCenter.default.post(name: .didJoinGame, object: nil, userInfo: ["joinCode": joinCode])
+        self.connectToGame() { error in
+            if let error = error {
+                NotificationCenter.default.post(name: .gameJoinError, object: nil, userInfo: ["error": error])
+            } else {
+                NotificationCenter.default.post(name: .didJoinGame, object: nil, userInfo: ["joinCode": joinCode])
+            }
+        }
     }
     
     /**
@@ -273,7 +289,7 @@ final class NetworkManager {
         guard let socket = socket else { throw NetworkError.socketDoesNotExist }
         if !socket.isConnected { await connectSocket() }
         self.gameChannel = socket.channel("game:\(joinCode)")
-        self.connectToGame()
+        self.connectToGame(nil)
     }
     
     /**
@@ -309,7 +325,7 @@ final class NetworkManager {
     
     // MARK: Private functions
     
-    private func connectToGame() {
+    private func connectToGame(_ completionHandler: ((GameConnectError?) -> Void)?) {
         guard let gameChannel = gameChannel, !gameChannel.isJoined else { return }
         
         presence = Presence(channel: gameChannel)
@@ -501,8 +517,30 @@ final class NetworkManager {
         
         gameChannel
             .join()
-            .receive("ok") { message in print("Connected to game", message.payload)}
-            .receive("error") { message in print("Failed to connect to game", message.payload)}
+            .receive("ok") { message in
+                print("Connected to game", message.payload)
+                if let completionHandler = completionHandler { completionHandler(nil) }
+            }
+            .receive("error") { [weak self] message in
+                guard let self = self else { return }
+                gameChannel.leave()
+                self.gameChannel = nil
+                
+                if let completionHandler = completionHandler,
+                   let reason = message.payload["reason"] as? String {
+                    switch reason {
+                    case "Game has already started":
+                        completionHandler(.alreadyStarted)
+                    case "Game is full":
+                        completionHandler(.full)
+                    case "Game not found":
+                        completionHandler(.notFound)
+                    default:
+                        print("Failed to connect to game for unrecognized reason:", reason)
+                        completionHandler(.unknownError(reason))
+                    }
+                }
+            }
     }
     
     private func cardFromDict(_ dict: [String: String]) -> Card? {

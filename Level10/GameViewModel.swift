@@ -73,6 +73,7 @@ class GameViewModel: ObservableObject {
         NotificationCenter.default.addObserver(self, selector: #selector(onDiscardTopChange), name: .discardTopDidChange, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameOver), name: .gameDidFinish, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameStart), name: .gameDidStart, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onJoinError), name: .gameJoinError, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onHandUpdate), name: .handDidUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onRoundFinished), name: .roundDidFinish, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onRoundStart), name: .roundDidStart, object: nil)
@@ -378,6 +379,11 @@ class GameViewModel: ObservableObject {
             selectedIndices.removeAll()
             newCardSelected = false
         }
+    }
+    
+    @objc private func onJoinError(_ notification: Notification) {
+        guard let joinError = notification.userInfo?["error"] as? GameConnectError else { return }
+        print("Error joining game", joinError)
     }
     
     @objc private func onJoinGame(_ notification: Notification) {
