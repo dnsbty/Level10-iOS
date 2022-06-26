@@ -28,12 +28,14 @@ struct HomeView: View {
                 Spacer()
 
                 Button {
+                    HapticManager.playLightImpact()
                     currentScreen.wrappedValue = .create
                 } label: {
                     L10Button(text: "Create Game", type: .secondary).padding(.horizontal)
                 }
 
                 Button {
+                    HapticManager.playLightImpact()
                     currentScreen.wrappedValue = .join
                 } label: {
                     L10Button(text: "Join Game", type: .primary).padding()

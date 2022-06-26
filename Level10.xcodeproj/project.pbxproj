@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D74835D52868C8B90043846C /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74835D42868C8B90043846C /* HapticManager.swift */; };
 		D762F4E1284D6DDF008FADA4 /* ScoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D762F4E0284D6DDF008FADA4 /* ScoreView.swift */; };
 		D7872F36284C17BD004AA89E /* RoundCompleteModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7872F35284C17BD004AA89E /* RoundCompleteModal.swift */; };
 		D7A62EFB28380BC400B8E466 /* SwiftPhoenixClient in Frameworks */ = {isa = PBXBuildFile; productRef = D7A62EFA28380BC400B8E466 /* SwiftPhoenixClient */; };
@@ -33,6 +34,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		D74835D42868C8B90043846C /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
 		D762F4E0284D6DDF008FADA4 /* ScoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreView.swift; sourceTree = "<group>"; };
 		D7872F35284C17BD004AA89E /* RoundCompleteModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundCompleteModal.swift; sourceTree = "<group>"; };
 		D7A62EFC2838294C00B8E466 /* NetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkManager.swift; sourceTree = "<group>"; };
@@ -108,6 +110,7 @@
 				D7BF72FE2831B77D0051E689 /* StatusIndicator.swift */,
 				D762F4E0284D6DDF008FADA4 /* ScoreView.swift */,
 				D7BF72FC2831B4990051E689 /* LobbyView.swift */,
+				D74835D42868C8B90043846C /* HapticManager.swift */,
 				D7BF73002831B9C20051E689 /* CardView.swift */,
 				D7E30FAE2844675E007B190B /* Card.swift */,
 				D7BF73022831C17F0051E689 /* GameView.swift */,
@@ -217,6 +220,7 @@
 				D7BF72F92831A89C0051E689 /* L10TextField.swift in Sources */,
 				D7BF72FF2831B77D0051E689 /* StatusIndicator.swift in Sources */,
 				D7BF72F4283198080051E689 /* L10Button.swift in Sources */,
+				D74835D52868C8B90043846C /* HapticManager.swift in Sources */,
 				D7BF72F0283196020051E689 /* Color+Ext.swift in Sources */,
 				D7BF73012831B9C20051E689 /* CardView.swift in Sources */,
 				D7BF73032831C17F0051E689 /* GameView.swift in Sources */,

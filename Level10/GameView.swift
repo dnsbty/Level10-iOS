@@ -105,6 +105,7 @@ struct GameView: View {
                     if let newCard = viewModel.newCard {
                         Button {
                             if viewModel.isCurrentPlayer && viewModel.hasDrawn {
+                                HapticManager.playSelectionChanged()
                                 viewModel.newCardSelected = !viewModel.newCardSelected
                             }
                         } label: {
@@ -119,6 +120,7 @@ struct GameView: View {
                         ForEach(viewModel.hand.indices, id: \.self) { i in
                             Button {
                                 if viewModel.isCurrentPlayer && viewModel.hasDrawn {
+                                    HapticManager.playSelectionChanged()
                                     viewModel.toggleIndexSelected(i)
                                 }
                             } label: {

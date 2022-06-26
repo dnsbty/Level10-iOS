@@ -84,6 +84,7 @@ class GameViewModel: ObservableObject {
     
     func addToPlayerTable(playerId: String, index: Int) {
         guard completedLevel, let playerTable = table[playerId], playerTable.count > index else { return }
+        HapticManager.playMediumImpact()
         
         Task {
             try? await NetworkManager.shared.addToTable(cards: self.selectedCards, tablePlayerId: playerId, groupPosition: index)
@@ -107,16 +108,21 @@ class GameViewModel: ObservableObject {
         newCardSelected = false
         
         for groupIndex in level.groups.indices {
-            if tempTable[groupIndex] == nil { return }
+            if tempTable[groupIndex] == nil {
+                HapticManager.playMediumImpact()
+                return
+            }
         }
         
         Task {
-            let groups = tempTable.map { $0.1 }
+            let groups = tempTable.keys.sorted().map { tempTable[$0]! }
             try? await NetworkManager.shared.tableCards(table: groups)
         }
     }
     
     func clearTempTableGroup(_ index: Int) {
+        HapticManager.playMediumImpact()
+        
         if let tabledCards = tempTable[index] {
             hand.append(contentsOf: tabledCards)
             hand.sort()
@@ -205,6 +211,7 @@ class GameViewModel: ObservableObject {
     // MARK: Notification Handlers
     
     @objc private func onAddToTable(_ notification: Notification) {
+        HapticManager.playMediumImpact()
         DispatchQueue.main.async { [self] in
             for index in selectedIndices.sorted(by: { $0 > $1 }) { hand.remove(at: index) }
             if newCardSelected { newCard = nil }
@@ -223,6 +230,7 @@ class GameViewModel: ObservableObject {
     
     @objc private func onCreateGame(_ notification: Notification) {
         guard let joinCode = notification.userInfo?["joinCode"] as? String else { return }
+        HapticManager.playMediumImpact()
         saveJoinCode(joinCode)
         
         DispatchQueue.main.async { [self] in
@@ -237,6 +245,8 @@ class GameViewModel: ObservableObject {
         DispatchQueue.main.async { [self] in
             currentPlayer = player
             hasDrawn = false
+            
+            if isCurrentPlayer { HapticManager.playWarning() }
         }
     }
     
@@ -247,6 +257,7 @@ class GameViewModel: ObservableObject {
     
     @objc private func onDrawCard(_ notification: Notification) {
         guard let newCard = notification.userInfo?["newCard"] as? Card else { return }
+        HapticManager.playMediumImpact()
         DispatchQueue.main.async { [self] in
             drawnCard = newCard
             self.newCard = newCard
@@ -271,6 +282,13 @@ class GameViewModel: ObservableObject {
             self.gameOver = true
             self.roundWinner = winner
             self.scores = scores.sorted()
+            
+            if let gameWinner = scores.first?.playerId,
+               gameWinner == UserManager.shared.id {
+                HapticManager.playSuccess()
+            } else {
+                HapticManager.playWarning()
+            }
         }
     }
     
@@ -282,6 +300,7 @@ class GameViewModel: ObservableObject {
               let players = notification.userInfo?["players"] as? [Player]
         else { return }
         
+        HapticManager.playWarning()
         let handCounts = Dictionary(uniqueKeysWithValues: players.map { ($0.id, 10) })
         
         DispatchQueue.main.async { [self] in
@@ -372,6 +391,8 @@ class GameViewModel: ObservableObject {
             }
         }
         
+        HapticManager.playMediumImpact()
+        
         DispatchQueue.main.async { [self] in
             drawnCard = nil
             newCard = nil
@@ -383,11 +404,13 @@ class GameViewModel: ObservableObject {
     
     @objc private func onJoinError(_ notification: Notification) {
         guard let joinError = notification.userInfo?["error"] as? GameConnectError else { return }
+        HapticManager.playError()
         print("Error joining game", joinError)
     }
     
     @objc private func onJoinGame(_ notification: Notification) {
         guard let joinCode = notification.userInfo?["joinCode"] as? String else { return }
+        HapticManager.playMediumImpact()
         saveJoinCode(joinCode)
         
         DispatchQueue.main.async { [self] in
@@ -422,6 +445,12 @@ class GameViewModel: ObservableObject {
               let scores = notification.userInfo?["scores"] as? [Score]
         else { return }
         
+        if completedLevel {
+            HapticManager.playSuccess()
+        } else {
+            HapticManager.playError()
+        }
+        
         DispatchQueue.main.async { [self] in
             playersReady.removeAll()
             roundWinner = winner
@@ -437,6 +466,7 @@ class GameViewModel: ObservableObject {
               let roundNumber = notification.userInfo?["roundNumber"] as? Int
         else { return }
         
+        HapticManager.playWarning()
         let discardTop = notification.userInfo?["discardTop"] as? Card
         
         DispatchQueue.main.async { [self] in
@@ -462,6 +492,7 @@ class GameViewModel: ObservableObject {
     }
     
     @objc private func onSetTable(_ notification: Notification) {
+        HapticManager.playSuccess()
         DispatchQueue.main.async {
             self.completedLevel = true
             self.tempTable = [:]

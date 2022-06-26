@@ -31,6 +31,7 @@ struct RoundCompleteModal: View {
                     .foregroundColor(.violet200)
                 
                 Button {
+                    HapticManager.playLightImpact()
                     currentScreen = .scoring
                 } label: {
                     L10Button(text: buttonText(), type: .primary).padding(.horizontal)

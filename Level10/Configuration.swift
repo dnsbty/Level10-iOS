@@ -13,14 +13,14 @@ enum DeploymentStage: String {
 
     var apiBaseUrl: String {
         switch self {
-        case .Development: return "http://localhost:4000"
+        case .Development: return "https://level10.dnsbty.com"
         case .Production: return "https://level10.games"
         }
     }
 
     var socketBaseUrl: String {
         switch self {
-        case .Development: return "ws://localhost:4000"
+        case .Development: return "wss://level10.dnsbty.com"
         case .Production: return "wss://level10.games"
         }
     }
@@ -29,7 +29,6 @@ enum DeploymentStage: String {
 struct Configuration {
     lazy var environment: DeploymentStage = {
         if let configuration = Bundle.main.object(forInfoDictionaryKey: "Configuration") as? String {
-            print("Got configuration string: '\(configuration)'")
             if let _ = configuration.range(of: "Development") {
                 print("Setting environment to DEVELOPMENT")
                 return DeploymentStage.Development

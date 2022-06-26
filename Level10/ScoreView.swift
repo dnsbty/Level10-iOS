@@ -77,6 +77,7 @@ struct ScoreView: View {
                             .padding(.bottom)
                     } else {
                         Button {
+                            HapticManager.playLightImpact()
                             NetworkManager.shared.markReady()
                         } label: {
                             L10Button(text: "Next Round", type: .primary).padding(.horizontal)
@@ -84,6 +85,7 @@ struct ScoreView: View {
                     }
                     
                     Button {
+                        HapticManager.playLightImpact()
                         NetworkManager.shared.leaveGame()
                     } label: {
                         L10Button(text: "Leave Game", type: .ghost)
