@@ -28,7 +28,6 @@ final class UserManager {
     private var creatingUser = false
     private let idKey = "userId"
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "UserManager")
-    private let tag = "com.dennisbeatty.Level10.userToken".data(using: .utf8)!
     
     private init() {
         if let token = getStoredToken() {
@@ -122,11 +121,12 @@ final class UserManager {
     }
     
     private func getStoredToken() -> String? {
+        var configuration = Configuration()
         var ref: AnyObject?
         
         let getQuery = [
             kSecClass: kSecClassKey,
-            kSecAttrApplicationTag: tag,
+            kSecAttrApplicationTag: configuration.environment.tokenTag,
             kSecReturnData: true
         ] as CFDictionary
         
@@ -145,8 +145,10 @@ final class UserManager {
     }
     
     private func removeToken() -> Bool {
+        var configuration = Configuration()
+        
         let removeQuery = [
-            kSecAttrApplicationTag: tag,
+            kSecAttrApplicationTag: configuration.environment.tokenTag,
             kSecClass: kSecClassKey
         ] as CFDictionary
         
@@ -166,11 +168,12 @@ final class UserManager {
     }
     
     private func setToken(_ token: String) -> Bool {
+        var configuration = Configuration()
         let tokenData = token.data(using: .utf8, allowLossyConversion: false)!
         
         let addQuery = [
             kSecValueData: tokenData,
-            kSecAttrApplicationTag: tag,
+            kSecAttrApplicationTag: configuration.environment.tokenTag,
             kSecClass: kSecClassKey
         ] as CFDictionary
         

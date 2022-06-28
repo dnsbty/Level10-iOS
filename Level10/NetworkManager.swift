@@ -46,8 +46,21 @@ final class NetworkManager {
     private init() {
         var configuration = Configuration()
         socket = Socket("\(configuration.environment.socketBaseUrl)/socket/websocket", paramsClosure: { [weak self] in
-            guard let self = self else { return [:] }
-            return ["token": self.authToken ?? ""]
+            guard let self = self, let authToken = self.authToken else { return [:] }
+            var params = ["token": authToken]
+            
+            // FIXME: Race condition
+            // This will create a race condition when the socket connection is established
+            // before the device token is received from Apple. Eventually the device token
+            // should be sent to the server after the connection has already been established
+            // so that it will work either way.
+            if let deviceToken = NotificationManager.shared.deviceToken {
+                params["device"] = deviceToken
+            } else {
+                print("No device token found")
+            }
+            
+            return params
         })
         
         guard let socket = socket else { return }

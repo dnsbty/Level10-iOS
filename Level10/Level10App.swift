@@ -25,6 +25,7 @@ extension EnvironmentValues {
 
 @main
 struct Level10App: App {
+    @UIApplicationDelegateAdaptor private var appDelegate: AppDelegate
     @StateObject private var viewModel = GameViewModel()
 
     var body: some Scene {

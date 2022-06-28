@@ -232,6 +232,7 @@ class GameViewModel: ObservableObject {
         guard let joinCode = notification.userInfo?["joinCode"] as? String else { return }
         HapticManager.playMediumImpact()
         saveJoinCode(joinCode)
+        NotificationManager.shared.registerForPushNotifications()
         
         DispatchQueue.main.async { [self] in
             isCreator = true
@@ -412,6 +413,7 @@ class GameViewModel: ObservableObject {
         guard let joinCode = notification.userInfo?["joinCode"] as? String else { return }
         HapticManager.playMediumImpact()
         saveJoinCode(joinCode)
+        NotificationManager.shared.registerForPushNotifications()
         
         DispatchQueue.main.async { [self] in
             isCreator = false

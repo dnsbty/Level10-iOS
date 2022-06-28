@@ -24,6 +24,13 @@ enum DeploymentStage: String {
         case .Production: return "wss://level10.games"
         }
     }
+    
+    var tokenTag: String {
+        switch self {
+        case .Development: return "com.dnsbty.level10.Level10.userToken"
+        case .Production: return "games.level10.Level10.userToken"
+        }
+    }
 }
 
 struct Configuration {

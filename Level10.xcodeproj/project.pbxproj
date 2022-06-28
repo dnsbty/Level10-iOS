@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		D74835D52868C8B90043846C /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74835D42868C8B90043846C /* HapticManager.swift */; };
+		D74835D92868FD680043846C /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74835D82868FD680043846C /* NotificationManager.swift */; };
+		D74835DB2869005F0043846C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74835DA2869005F0043846C /* AppDelegate.swift */; };
 		D762F4E1284D6DDF008FADA4 /* ScoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D762F4E0284D6DDF008FADA4 /* ScoreView.swift */; };
 		D7872F36284C17BD004AA89E /* RoundCompleteModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7872F35284C17BD004AA89E /* RoundCompleteModal.swift */; };
 		D7A62EFB28380BC400B8E466 /* SwiftPhoenixClient in Frameworks */ = {isa = PBXBuildFile; productRef = D7A62EFA28380BC400B8E466 /* SwiftPhoenixClient */; };
@@ -35,6 +37,8 @@
 
 /* Begin PBXFileReference section */
 		D74835D42868C8B90043846C /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
+		D74835D82868FD680043846C /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		D74835DA2869005F0043846C /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		D762F4E0284D6DDF008FADA4 /* ScoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreView.swift; sourceTree = "<group>"; };
 		D7872F35284C17BD004AA89E /* RoundCompleteModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundCompleteModal.swift; sourceTree = "<group>"; };
 		D7A62EFC2838294C00B8E466 /* NetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkManager.swift; sourceTree = "<group>"; };
@@ -98,8 +102,10 @@
 				D7BF72ED2831936F0051E689 /* HomeView.swift */,
 				D7BF72F82831A89C0051E689 /* L10TextField.swift */,
 				D7BF72F3283198080051E689 /* L10Button.swift */,
+				D74835DA2869005F0043846C /* AppDelegate.swift */,
 				D7BF72F62831A0420051E689 /* CreateGameView.swift */,
 				D7BF72FA2831A9B50051E689 /* JoinGameView.swift */,
+				D74835D82868FD680043846C /* NotificationManager.swift */,
 				D7C70E65283ABDC800C4A41B /* Game.swift */,
 				D7A62EFC2838294C00B8E466 /* NetworkManager.swift */,
 				D7C70E69283AC21C00C4A41B /* GameViewModel.swift */,
@@ -208,6 +214,7 @@
 				D7E30FAF2844675E007B190B /* Card.swift in Sources */,
 				D7C70E66283ABDC800C4A41B /* Game.swift in Sources */,
 				D7BF72F72831A0420051E689 /* CreateGameView.swift in Sources */,
+				D74835D92868FD680043846C /* NotificationManager.swift in Sources */,
 				D7A62F042838820700B8E466 /* Configuration.swift in Sources */,
 				D7C70E68283ABE4400C4A41B /* Notification+Ext.swift in Sources */,
 				D7BF72EE2831936F0051E689 /* HomeView.swift in Sources */,
@@ -225,6 +232,7 @@
 				D7BF73012831B9C20051E689 /* CardView.swift in Sources */,
 				D7BF73032831C17F0051E689 /* GameView.swift in Sources */,
 				D7BF72E0283193370051E689 /* Level10App.swift in Sources */,
+				D74835DB2869005F0043846C /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -296,6 +304,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Level10/Level10.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Level10/Preview Content\"";
@@ -443,6 +452,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Level10/Level10.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Level10/Preview Content\"";
@@ -476,6 +486,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Level10/Level10.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Level10/Preview Content\"";
