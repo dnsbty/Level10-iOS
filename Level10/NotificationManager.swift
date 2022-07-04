@@ -30,4 +30,9 @@ class NotificationManager {
             self.getNotificationSettings()
         }
     }
+    
+    func setDeviceToken(_ token: String) {
+        deviceToken = token
+        NotificationCenter.default.post(name: .didRegisterDeviceToken, object: nil)
+    }
 }

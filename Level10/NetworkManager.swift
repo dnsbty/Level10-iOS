@@ -25,11 +25,12 @@ enum NetworkError: Error {
     case badRequest
     case badServerResponse
     case badURL
+    case channelNotJoined
     case notFound
     case requestRateLimited
     case requestForbidden
     case requestUnauthorized
-    case socketDoesNotExist
+    case socketNotConnected
     case unknownError
 }
 
@@ -42,6 +43,7 @@ final class NetworkManager {
     private var gameChannel: Channel?
     private var socket: Socket?
     private var presence: Presence?
+    private var sentDeviceToken = false
     
     private init() {
         var configuration = Configuration()
@@ -49,13 +51,9 @@ final class NetworkManager {
             guard let self = self, let authToken = self.authToken else { return [:] }
             var params = ["token": authToken]
             
-            // FIXME: Race condition
-            // This will create a race condition when the socket connection is established
-            // before the device token is received from Apple. Eventually the device token
-            // should be sent to the server after the connection has already been established
-            // so that it will work either way.
             if let deviceToken = NotificationManager.shared.deviceToken {
                 params["device"] = deviceToken
+                self.sentDeviceToken = true
             } else {
                 print("No device token found")
             }
@@ -84,15 +82,16 @@ final class NetworkManager {
 //        socket.logger = { message in print("LOG:", message) }
         
         NotificationCenter.default.addObserver(self, selector: #selector(handleSetToken), name: .didSetToken, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleNewDeviceToken), name: .didRegisterDeviceToken, object: nil)
     }
     
     /**
      Adds cards from the player's hand to one of the places on the table.
      
-     - Throws: `NetworkError.socketDoesNotExist` if the socket wasn't properly created for some reason.
+     - Throws: `NetworkError.socketNotConnected` if the socket wasn't properly created for some reason.
      */
     func addToTable(cards: [Card], tablePlayerId: String, groupPosition: Int) async throws {
-        guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketDoesNotExist }
+        guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
         
         let cardDicts = cards.map { $0.forJson() }
@@ -131,11 +130,13 @@ final class NetworkManager {
      - Parameter withDisplayName: The name to display for the user creating the game.
      - Parameter settings: Settings to use for the game being created.
      
-     - Throws: `NetworkError.socketDoesNotExist` if the socket wasn't properly created for some reason.
+     - Throws: `NetworkError.socketNotConnected` or `NetworkError.channelNotJoined` if either the socket or the lobby channel was not connected properly.
      */
     func createGame(withDisplayName name: String, settings: GameSettings) async throws {
-        guard let socket = socket, let channel = lobbyChannel else { throw NetworkError.socketDoesNotExist }
+        guard let socket = socket else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
+        guard let channel = lobbyChannel else { throw NetworkError.channelNotJoined }
+        
         let params: [String: Any] = ["displayName": name, "skipNextPlayer": settings.skipNextPlayer]
         
         channel
@@ -200,10 +201,10 @@ final class NetworkManager {
     /**
      Discards a card from the player's hand.
      
-     - Throws: `NetworkError.socketDoesNotExist` if the socket wasn't properly created for some reason.
+     - Throws: `NetworkError.socketNotConnected` if the socket wasn't properly created for some reason.
      */
     func discardCard(card: Card) async throws {
-        guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketDoesNotExist }
+        guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
         
         channel
@@ -224,10 +225,10 @@ final class NetworkManager {
     /**
      Draws a card from either the draw pile or the discard pile.
      
-     - Throws: `NetworkError.socketDoesNotExist` if the socket wasn't properly created for some reason.
+     - Throws: `NetworkError.socketNotConnected` if the socket wasn't properly created for some reason.
      */
     func drawCard(source: DrawSource) async throws {
-        guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketDoesNotExist }
+        guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
         let params: [String: Any] = ["source": source.rawValue]
         
@@ -258,10 +259,10 @@ final class NetworkManager {
      - Parameter withCode: The join code for the game to join.
      - Parameter displayName: The name to display for the user creating the game.
      
-     - Throws: `NetworkError.socketDoesNotExist` if the socket wasn't properly created for some reason.
+     - Throws: `NetworkError.socketNotConnected` if the socket wasn't properly created for some reason.
      */
     func joinGame(withCode joinCode: String, displayName name: String) async throws {
-        guard let socket = socket else { throw NetworkError.socketDoesNotExist }
+        guard let socket = socket else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
         let params = ["displayName": name]
         self.gameChannel = socket.channel("game:\(joinCode)", params: params)
@@ -281,6 +282,7 @@ final class NetworkManager {
         gameChannel?.push("leave_game", payload: [:])
         gameChannel?.leave()
         gameChannel = nil
+        sentDeviceToken = false
         NotificationCenter.default.post(name: .didLeaveGame, object: nil)
     }
     
@@ -296,13 +298,26 @@ final class NetworkManager {
      
      - Parameter withCode: The join code for the game to which connection should be re-established.
      
-     - Throws: `NetworkError.socketDoesNotExist` if the socket wasn't properly created for some reason.
+     - Throws: `NetworkError.socketNotConnected` if the socket wasn't properly created for some reason.
      */
     func reconnectToGame(withCode joinCode: String) async throws {
-        guard let socket = socket else { throw NetworkError.socketDoesNotExist }
+        guard let socket = socket else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
         self.gameChannel = socket.channel("game:\(joinCode)")
         self.connectToGame(nil)
+    }
+    
+    /**
+     Sends the device's token to the server to allow for push notifications to be received.
+     */
+    func sendDeviceTokenToServer() {
+        if let gameChannel = gameChannel, let deviceToken = NotificationManager.shared.deviceToken {
+            gameChannel
+                .push("put_device_token", payload: ["token": deviceToken])
+                .receive("ok") { [weak self] _ in
+                    self?.sentDeviceToken = true
+            }
+        }
     }
     
     /**
@@ -315,10 +330,10 @@ final class NetworkManager {
     /**
      Adds cards from the player's hand to their table.
      
-     - Throws: `NetworkError.socketDoesNotExist` if the socket wasn't properly created for some reason.
+     - Throws: `NetworkError.socketNotConnected` if the socket wasn't properly created for some reason.
      */
     func tableCards(table: [[Card]]) async throws {
-        guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketDoesNotExist }
+        guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
         
         let tableGroups = table.map { group in
@@ -530,8 +545,13 @@ final class NetworkManager {
         
         gameChannel
             .join()
-            .receive("ok") { message in
+            .receive("ok") { [weak self] message in
                 print("Connected to game", message.payload)
+                
+                if let self = self, !self.sentDeviceToken, NotificationManager.shared.deviceToken != nil {
+                    self.sendDeviceTokenToServer()
+                }
+                
                 if let completionHandler = completionHandler { completionHandler(nil) }
             }
             .receive("error") { [weak self] message in
@@ -591,6 +611,10 @@ final class NetworkManager {
     }
     
     // MARK: Notification handlers
+    
+    @objc private func handleNewDeviceToken(_ notification: Notification) {
+        if !sentDeviceToken { sendDeviceTokenToServer() }
+    }
     
     @objc private func handleSetToken(_ notification: Notification) {
         guard let token = notification.userInfo?["token"] as? String else { return }

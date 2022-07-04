@@ -26,6 +26,7 @@ extension Notification.Name {
     static let didReceiveTableSetError = Notification.Name("didReceiveTableSetError")
     static let didReceiveUpdatedHandCounts = Notification.Name("didReceiveUpdatedHandCounts")
     static let didReceiveUpdatedPlayerList = Notification.Name("didReceiveUpdatedPlayerList")
+    static let didRegisterDeviceToken = Notification.Name("didRegisterDeviceToken")
     static let didSetTable = Notification.Name("didSetTable")
     static let didSetToken = Notification.Name("didSetToken")
     static let discardTopDidChange = Notification.Name("discardTopDidChange")
