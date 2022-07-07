@@ -30,13 +30,14 @@ struct ScoreView: View {
                         let player = viewModel.player(id: score.playerId)
                         
                         HStack(spacing: 8) {
-                            Text("\(scoreIndex + 1).")
+                            Text(viewModel.remainingPlayers.contains(score.playerId) ? "\(scoreIndex + 1)." : "💀")
                                 .font(.system(size: 18.0, weight: .semibold, design: .rounded))
                                 .foregroundColor(.white)
 
                             Text(player?.name ?? "")
                                 .font(.system(size: 28.0, weight: .semibold, design: .rounded))
                                 .foregroundColor(.white)
+                                .strikethrough(!viewModel.remainingPlayers.contains(score.playerId))
 
                             Spacer()
                             
@@ -128,6 +129,13 @@ struct ScoreView_Previews: PreviewProvider {
         ]
         
         viewModel.gameOver = true
+        
+        viewModel.remainingPlayers = [
+            "b95e86d7-82d5-4444-9322-2a7405f64fb8",
+            "af225f65-7e29-4f08-b1e2-ac67abec6ab0",
+            "20fc38f2-8657-47ca-8b64-72e3cc021d77",
+            "679fbdde-eafa-46de-bc40-40165f68b218"
+        ]
         
         viewModel.players = [
             Player(name: "Christopher", id: "b95e86d7-82d5-4444-9322-2a7405f64fb8"),

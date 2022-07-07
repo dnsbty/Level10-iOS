@@ -56,7 +56,7 @@ struct LobbyView: View {
 
                 HStack {
                     Button {
-                        NetworkManager.shared.leaveGame()
+                        NetworkManager.shared.leaveLobby()
                     } label: {
                         L10Button(text: "Leave", type: .ghost)
                     }

@@ -12,12 +12,14 @@ class GameViewModel: ObservableObject {
     @Published var currentPlayer: String?
     @Published var currentScreen = Screen.home
     @Published var discardPileTopCard: Card?
+    @Published var gameOver = false
     @Published var hand: [Card] = []
     @Published var handCounts: [String: Int] = [:]
     @Published var newCard: Card?
     @Published var newCardSelected = false
     @Published var players: [Player] = []
     @Published var playersReady = Set<String>()
+    @Published var remainingPlayers = Set<String>()
     @Published var roundWinner: Player?
     @Published var selectedIndices = Set<Int>()
     @Published var selectPlayerToSkip = false
@@ -26,7 +28,6 @@ class GameViewModel: ObservableObject {
     
     var completedLevel = false
     var drawnCard: Card?
-    var gameOver = false
     var hasDrawn = false
     var isCreator = false
     var isReadyForNextRound = false
@@ -80,6 +81,7 @@ class GameViewModel: ObservableObject {
         NotificationCenter.default.addObserver(self, selector: #selector(onPresenceUpdate), name: .didReceivePresenceUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onHandCountsUpdated), name: .didReceiveUpdatedHandCounts, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onPlayerListUpdate), name: .didReceiveUpdatedPlayerList, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onPlayerRemoved), name: .didRemovePlayer, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onSetTable), name: .didSetTable, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onDiscardTopChange), name: .discardTopDidChange, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameOver), name: .gameDidFinish, object: nil)
@@ -226,6 +228,7 @@ class GameViewModel: ObservableObject {
         newCardSelected = false
         players = []
         playersReady.removeAll()
+        remainingPlayers.removeAll()
         roundNumber = 1
         roundWinner = nil
         scores = []
@@ -337,6 +340,7 @@ class GameViewModel: ObservableObject {
         
         HapticManager.playWarning()
         let handCounts = Dictionary(uniqueKeysWithValues: players.map { ($0.id, 10) })
+        let remainingPlayers = Set(players.map { $0.id })
         
         DispatchQueue.main.async { [self] in
             completedLevel = false
@@ -349,6 +353,7 @@ class GameViewModel: ObservableObject {
             self.levels = levels
             self.players = players
             playersReady.removeAll()
+            self.remainingPlayers = remainingPlayers
             roundNumber = 1
             roundWinner = nil
             selectPlayerToSkip = false
@@ -368,6 +373,7 @@ class GameViewModel: ObservableObject {
               let levels = notification.userInfo?["levels"] as? [String: Level],
               let players = notification.userInfo?["players"] as? [Player],
               let playersReady = notification.userInfo?["playersReady"] as? Set<String>,
+              let remainingPlayers = notification.userInfo?["remainingPlayers"] as? Set<String>,
               let roundNumber = notification.userInfo?["roundNumber"] as? Int,
               let scores = notification.userInfo?["scores"] as? [Score],
               let settings = notification.userInfo?["settings"] as? GameSettings,
@@ -409,6 +415,7 @@ class GameViewModel: ObservableObject {
             self.newCard = newCard
             self.players = players
             self.playersReady = playersReady
+            self.remainingPlayers = remainingPlayers
             self.roundNumber = roundNumber
             self.roundWinner = roundWinner
             self.scores = scores.sorted()
@@ -473,6 +480,11 @@ class GameViewModel: ObservableObject {
         DispatchQueue.main.async { self.players = players }
     }
     
+    @objc private func onPlayerRemoved(_ notification: Notification) {
+        guard let playerId = notification.userInfo?["player"] as? String else { return }
+        DispatchQueue.main.async { self.remainingPlayers.remove(playerId) }
+    }
+    
     @objc private func onPlayersReadyUpdate(_ notification: Notification) {
         guard let playersReady = notification.userInfo?["playersReady"] as? Set<String> else { return }
         if gameOver && playersReady.contains(UserManager.shared.id ?? "") { NetworkManager.shared.endGame() }
@@ -507,6 +519,7 @@ class GameViewModel: ObservableObject {
               let hand = notification.userInfo?["hand"] as? [Card],
               let handCounts = notification.userInfo?["handCounts"] as? [String: Int],
               let levels = notification.userInfo?["levels"] as? [String: Level],
+              let remainingPlayers = notification.userInfo?["remainingPlayers"] as? Set<String>,
               let roundNumber = notification.userInfo?["roundNumber"] as? Int,
               let settings = notification.userInfo?["settings"] as? GameSettings
         else { return }
@@ -527,6 +540,7 @@ class GameViewModel: ObservableObject {
             newCard = nil
             newCardSelected = false
             playersReady.removeAll()
+            self.remainingPlayers = remainingPlayers
             self.roundNumber = roundNumber
             roundWinner = nil
             self.scores = scores.sorted()

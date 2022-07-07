@@ -278,10 +278,21 @@ final class NetworkManager {
     }
     
     /**
-     Leaves the game.
+     Leaves the game after it has started.
      */
     func leaveGame() {
         gameChannel?.push("leave_game", payload: [:])
+        gameChannel?.leave()
+        gameChannel = nil
+        sentDeviceToken = false
+        NotificationCenter.default.post(name: .didLeaveGame, object: nil)
+    }
+    
+    /**
+     Leaves the game while still in the lobby.
+     */
+    func leaveLobby() {
+        gameChannel?.push("leave_lobby", payload: [:])
         gameChannel?.leave()
         gameChannel = nil
         sentDeviceToken = false
@@ -372,7 +383,7 @@ final class NetworkManager {
             else { return }
             
             let scores = scoreDicts.compactMap(self.scoreFromDict)
-            NotificationCenter.default.post(name: .roundDidFinish, object: nil, userInfo: ["scores": scores, "roundWinner": winner])
+            NotificationCenter.default.post(name: .gameDidFinish, object: nil, userInfo: ["scores": scores, "roundWinner": winner])
         }
         
         gameChannel.on("game_started") { [weak self] message in
@@ -420,6 +431,7 @@ final class NetworkManager {
                   let hasDrawn = message.payload["has_drawn"] as? Bool,
                   let levelDicts = message.payload["levels"] as? [String: [[String: Any]]],
                   let playerDicts = message.payload["players"] as? [[String: String]],
+                  let remainingPlayers = message.payload["remaining_players"] as? [String],
                   let roundNumber = message.payload["round_number"] as? Int,
                   let skipNextPlayer = message.payload["skip_next_player"] as? Bool,
                   let tableDicts = message.payload["table"] as? [String: [[[String: String]]]]
@@ -460,6 +472,7 @@ final class NetworkManager {
                 "levels": levels,
                 "players": players,
                 "playersReady": Set(playersReady),
+                "remainingPlayers": Set(remainingPlayers),
                 "roundNumber": roundNumber,
                 "scores": scores,
                 "settings": GameSettings(skipNextPlayer: skipNextPlayer),
@@ -485,6 +498,11 @@ final class NetworkManager {
         gameChannel.on("new_turn") { message in
             guard let player = message.payload["player"] as? String else { return }
             NotificationCenter.default.post(name: .currentPlayerDidUpdate, object: nil, userInfo: ["player": player])
+        }
+        
+        gameChannel.on("player_removed") { message in
+            guard let playerId = message.payload["player"] as? String else { return }
+            NotificationCenter.default.post(name: .didRemovePlayer, object: nil, userInfo: ["player": playerId])
         }
         
         gameChannel.on("players_ready") { message in
@@ -518,6 +536,7 @@ final class NetworkManager {
                   let handCounts = message.payload["hand_counts"] as? [String: Int],
                   let handDicts = message.payload["hand"] as? [[String: String]],
                   let levelDicts = message.payload["levels"] as? [String: [[String: Any]]],
+                  let remainingPlayers = message.payload["remaining_players"] as? [String],
                   let roundNumber = message.payload["round_number"] as? Int,
                   let skipNextPlayer = message.payload["skip_next_player"] as? Bool
             else { return }
@@ -531,6 +550,7 @@ final class NetworkManager {
                 "hand": hand,
                 "handCounts": handCounts,
                 "levels": levels,
+                "remainingPlayers": Set(remainingPlayers),
                 "roundNumber": roundNumber,
                 "settings": GameSettings(skipNextPlayer: skipNextPlayer)
             ]

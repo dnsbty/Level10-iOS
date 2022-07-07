@@ -27,26 +27,29 @@ struct GameView: View {
             VStack {
                 VStack(alignment: .leading, spacing: 16) {
                     ForEach(viewModel.players) { player in
-                        HStack(spacing: 6) {
-                            StatusIndicator(status: viewModel.isConnected(playerId: player.id) ? .online : .offline)
-                                .frame(width: 10, height: 10, alignment: .center)
+                        if viewModel.remainingPlayers.contains(player.id) {
+                            HStack(spacing: 6) {
+                                StatusIndicator(status: viewModel.isConnected(playerId: player.id) ? .online : .offline)
+                                    .frame(width: 10, height: 10, alignment: .center)
+                                
+                                Text(player.id == UserManager.shared.id ? "You" : player.name)
+                                    .font(.system(size: 18.0, weight: .semibold, design: .rounded))
+                                    .foregroundColor(.white)
+                                    .strikethrough(viewModel.skippedPlayers.contains(player.id))
+                                    .lineLimit(1)
+                                    .frame(maxWidth: 100, alignment: .leading)
+                                    .opacity(player.id == viewModel.currentPlayer ? 1.0 : 0.6)
                             
-                            Text(player.id == UserManager.shared.id ? "You" : player.name)
-                                .font(.system(size: 18.0, weight: .semibold, design: .rounded))
-                                .foregroundColor(.white)
-                                .lineLimit(1)
-                                .frame(maxWidth: 100, alignment: .leading)
-                                .opacity(player.id == viewModel.currentPlayer ? 1.0 : 0.6)
-                        
-                            Spacer()
-                            
-                            let handCount = viewModel.handCounts[player.id]
-                            Text("\(handCount == nil ? "" : "\(handCount!)")")
-                                .font(.system(size: 12.0, weight: .semibold, design: .rounded))
-                                .foregroundColor(.violet300)
-                                .frame(width: 16)
-                            
-                            self.playerTable(player.id)
+                                Spacer()
+                                
+                                let handCount = viewModel.handCounts[player.id]
+                                Text("\(handCount == nil ? "" : "\(handCount!)")")
+                                    .font(.system(size: 12.0, weight: .semibold, design: .rounded))
+                                    .foregroundColor(.violet300)
+                                    .frame(width: 16)
+                                
+                                self.playerTable(player.id)
+                            }
                         }
                     }
                 }
@@ -159,7 +162,7 @@ struct GameView: View {
         }
         .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local).onEnded({ value in
             if value.translation.width > 50 {
-                NetworkManager.shared.leaveGame()
+                NetworkManager.shared.leaveLobby()
             }
         }))
     }
@@ -406,6 +409,10 @@ struct GameView_Previews: PreviewProvider {
             "1": 3
         ]
         viewModel.newCard = Card(color: .blue, value: .three)
+        viewModel.remainingPlayers = [
+            "b95e86d7-82d5-4444-9322-2a7405f64fb8",
+            "1"
+        ]
         viewModel.table = [
             "cf34b6bf-b452-400a-a7f3-d5537d5a73b4": [
                 [
