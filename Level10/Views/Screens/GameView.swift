@@ -145,6 +145,16 @@ struct GameView: View {
                                        gameOver: viewModel.gameOver,
                                        winner: winner)
                 }.ignoresSafeArea()
+            } else if viewModel.selectPlayerToSkip {
+                ZStack(alignment: .bottom) {
+                    Color(uiColor: .systemBackground).opacity(0.8)
+                    
+                    SkipSelectModal(displayModal: $viewModel.selectPlayerToSkip,
+                                    players: viewModel.players,
+                                    skippedPlayers: viewModel.skippedPlayers) { playerId in
+                        viewModel.skipPlayer(id: playerId)
+                    }
+                }.ignoresSafeArea()
             }
         }
         .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local).onEnded({ value in
@@ -310,22 +320,28 @@ struct GameView: View {
             return
         }
         
-        if viewModel.hasDrawn {
-            if viewModel.selectedCards.count == 1 {
-                Task {
-                    do {
-                        try await NetworkManager.shared.discardCard(card: viewModel.selectedCards.first!)
-                    } catch {
-                        // TODO: Display errors returned here
-                        print("Error discarding card")
-                    }
-                }
-            } else {
-                // TODO: Display error
-                return
-            }
-        } else {
+        guard viewModel.hasDrawn else {
             drawCard(source: .discardPile)
+            return
+        }
+        
+        guard viewModel.selectedCards.count == 1 else {
+            // TODO: Display error
+            return
+        }
+                
+        if !viewModel.settings.skipNextPlayer,
+           viewModel.selectedCards.first?.value == .skip {
+            viewModel.selectPlayerToSkip = true
+        } else {
+            Task {
+                do {
+                    try await NetworkManager.shared.discardCard(card: viewModel.selectedCards.first!, playerToSkip: nil)
+                } catch {
+                    // TODO: Display errors returned here
+                    print("Error discarding card")
+                }
+            }
         }
     }
     

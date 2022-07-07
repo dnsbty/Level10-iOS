@@ -56,6 +56,7 @@ enum ButtonType {
 struct L10Button: View {
     var text: String
     var type: ButtonType
+    var disabled = false
     
     var body: some View {
         ZStack {
@@ -63,12 +64,14 @@ struct L10Button: View {
                 .foregroundColor(type.bgColor)
             
             Text(text)
+                .strikethrough(disabled)
                 .font(.system(size: 24.0, weight: .bold, design: .rounded))
                 .foregroundColor(type.textColor)
                 .shadow(color: type.textShadownColor, radius: 4, x: 0, y: 4)
         }
         .frame(height: 58)
         .shadow(color: type.shadowColor, radius: 4, x: 0, y: 4)
+        .opacity(disabled ? 0.4 : 1.0)
     }
 }
 
@@ -78,11 +81,23 @@ struct L10Button_Previews: PreviewProvider {
             .previewLayout(PreviewLayout.fixed(width: 358, height: 58))
             .background { Color.violet700 }
         
+        L10Button(text: "Join Game", type: .primary, disabled: true)
+            .previewLayout(PreviewLayout.fixed(width: 358, height: 58))
+            .background { Color.violet700 }
+        
         L10Button(text: "Create Game", type: .secondary)
             .previewLayout(PreviewLayout.fixed(width: 358, height: 58))
             .background { Color.violet700 }
         
+        L10Button(text: "Create Game", type: .secondary, disabled: true)
+            .previewLayout(PreviewLayout.fixed(width: 358, height: 58))
+            .background { Color.violet700 }
+        
         L10Button(text: "Nevermind", type: .ghost)
+            .previewLayout(PreviewLayout.fixed(width: 358, height: 58))
+            .background { Color.violet700 }
+        
+        L10Button(text: "Nevermind", type: .ghost, disabled: true)
             .previewLayout(PreviewLayout.fixed(width: 358, height: 58))
             .background { Color.violet700 }
     }

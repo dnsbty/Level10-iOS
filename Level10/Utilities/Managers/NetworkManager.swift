@@ -203,12 +203,14 @@ final class NetworkManager {
      
      - Throws: `NetworkError.socketNotConnected` if the socket wasn't properly created for some reason.
      */
-    func discardCard(card: Card) async throws {
+    func discardCard(card: Card, playerToSkip: String?) async throws {
         guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
+        var payload: [String: Any] = ["card": card.forJson()]
+        if let playerToSkip = playerToSkip { payload["player_id"] = playerToSkip }
         
         channel
-            .push("discard", payload: ["card": card.forJson()])
+            .push("discard", payload: payload)
             .receive("ok") { [weak self] response in
                 guard let self = self,
                       let handDicts = response.payload["hand"] as? [[String: String]]
@@ -380,7 +382,8 @@ final class NetworkManager {
                   let discardTop = self.cardFromDict(discardTopDict),
                   let handDicts = message.payload["hand"] as? [[String: String]],
                   let levelDicts = message.payload["levels"] as? [String: [[String: Any]]],
-                  let playerDicts = message.payload["players"] as? [[String: String]]
+                  let playerDicts = message.payload["players"] as? [[String: String]],
+                  let skipNextPlayer = message.payload["skip_next_player"] as? Bool
             else { return }
             
             let hand = handDicts.compactMap(self.cardFromDict)
@@ -391,7 +394,15 @@ final class NetworkManager {
                 return Player(name: name, id: id)
             }
             
-            let info: [AnyHashable: Any] = ["currentPlayer": currentPlayer, "discardTop": discardTop, "hand": hand, "levels": levels, "players": players]
+            let info: [AnyHashable: Any] = [
+                "currentPlayer": currentPlayer,
+                "discardTop": discardTop,
+                "hand": hand,
+                "levels": levels,
+                "players": players,
+                "settings": GameSettings(skipNextPlayer: skipNextPlayer)
+            ]
+            
             NotificationCenter.default.post(name: .gameDidStart, object: nil, userInfo: info)
         }
         
@@ -410,6 +421,7 @@ final class NetworkManager {
                   let levelDicts = message.payload["levels"] as? [String: [[String: Any]]],
                   let playerDicts = message.payload["players"] as? [[String: String]],
                   let roundNumber = message.payload["round_number"] as? Int,
+                  let skipNextPlayer = message.payload["skip_next_player"] as? Bool,
                   let tableDicts = message.payload["table"] as? [String: [[[String: String]]]]
             else { return }
             
@@ -417,6 +429,7 @@ final class NetworkManager {
             let playersReady = message.payload["players_ready"] as? [String] ?? []
             let roundWinnerDict = message.payload["round_winner"] as? [String: String]
             let scoreDicts = message.payload["scores"] as? [[String: Any]]
+            let skippedPlayers = message.payload["skipped_players"] as? [String] ?? []
             
             // Convert the various dictionaries to card, level, player, and score structs
             let hand = handDicts.compactMap(self.cardFromDict)
@@ -449,6 +462,8 @@ final class NetworkManager {
                 "playersReady": Set(playersReady),
                 "roundNumber": roundNumber,
                 "scores": scores,
+                "settings": GameSettings(skipNextPlayer: skipNextPlayer),
+                "skippedPlayers": Set(skippedPlayers),
                 "table": table
             ]
             
@@ -503,7 +518,8 @@ final class NetworkManager {
                   let handCounts = message.payload["hand_counts"] as? [String: Int],
                   let handDicts = message.payload["hand"] as? [[String: String]],
                   let levelDicts = message.payload["levels"] as? [String: [[String: Any]]],
-                  let roundNumber = message.payload["round_number"] as? Int
+                  let roundNumber = message.payload["round_number"] as? Int,
+                  let skipNextPlayer = message.payload["skip_next_player"] as? Bool
             else { return }
             
             let discardTopDict = message.payload["discard_top"] as? [String: String]
@@ -515,12 +531,18 @@ final class NetworkManager {
                 "hand": hand,
                 "handCounts": handCounts,
                 "levels": levels,
-                "roundNumber": roundNumber
+                "roundNumber": roundNumber,
+                "settings": GameSettings(skipNextPlayer: skipNextPlayer)
             ]
             
             if let discardTopDict = discardTopDict { info["discardTop"] = self.cardFromDict(discardTopDict) }
             
             NotificationCenter.default.post(name: .roundDidStart, object: nil, userInfo: info)
+        }
+        
+        gameChannel.on("skipped_players_updated") { message in
+            guard let skippedPlayers = message.payload["skipped_players"] as? [String] else { return }
+            NotificationCenter.default.post(name: .skippedPlayersDidUpdate, object: nil, userInfo: ["skippedPlayers": Set(skippedPlayers)])
         }
         
         gameChannel.on("table_updated") { [weak self] message in

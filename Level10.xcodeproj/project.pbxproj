@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D72E74652873D1A700CD61A3 /* SkipSelectModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = D72E74642873D1A700CD61A3 /* SkipSelectModal.swift */; };
+		D74492A42873D56A0003C5CF /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74492A32873D56A0003C5CF /* Constants.swift */; };
 		D74835D52868C8B90043846C /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74835D42868C8B90043846C /* HapticManager.swift */; };
 		D74835D92868FD680043846C /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74835D82868FD680043846C /* NotificationManager.swift */; };
 		D74835DB2869005F0043846C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74835DA2869005F0043846C /* AppDelegate.swift */; };
@@ -36,6 +38,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		D72E74642873D1A700CD61A3 /* SkipSelectModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkipSelectModal.swift; sourceTree = "<group>"; };
+		D74492A32873D56A0003C5CF /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		D74835D42868C8B90043846C /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
 		D74835D82868FD680043846C /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		D74835DA2869005F0043846C /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -92,6 +96,7 @@
 				D72E74612873C9A700CD61A3 /* Extensions */,
 				D72E74602873C9A200CD61A3 /* Managers */,
 				D7A62F032838820700B8E466 /* Configuration.swift */,
+				D74492A32873D56A0003C5CF /* Constants.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -132,6 +137,7 @@
 				D7BF72F3283198080051E689 /* L10Button.swift */,
 				D7BF72F82831A89C0051E689 /* L10TextField.swift */,
 				D7872F35284C17BD004AA89E /* RoundCompleteModal.swift */,
+				D72E74642873D1A700CD61A3 /* SkipSelectModal.swift */,
 				D7BF72FE2831B77D0051E689 /* StatusIndicator.swift */,
 			);
 			path = "Custom Views";
@@ -266,10 +272,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D74492A42873D56A0003C5CF /* Constants.swift in Sources */,
 				D7A62EFD2838294C00B8E466 /* NetworkManager.swift in Sources */,
 				D7E30FAF2844675E007B190B /* Card.swift in Sources */,
 				D7C70E66283ABDC800C4A41B /* Game.swift in Sources */,
 				D7BF72F72831A0420051E689 /* CreateGameView.swift in Sources */,
+				D72E74652873D1A700CD61A3 /* SkipSelectModal.swift in Sources */,
 				D74835D92868FD680043846C /* NotificationManager.swift in Sources */,
 				D7A62F042838820700B8E466 /* Configuration.swift in Sources */,
 				D7C70E68283ABE4400C4A41B /* Notification+Ext.swift in Sources */,

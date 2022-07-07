@@ -25,11 +25,11 @@ struct RoundCompleteModal: View {
                     .font(.system(size: 24.0, weight: .semibold, design: .rounded))
                     .foregroundColor(.white)
                     .padding(.top, 32)
-                
+
                 Text(roundWinnerText(winner))
                     .font(.system(size: 18.0, weight: .semibold, design: .rounded))
                     .foregroundColor(.violet200)
-                
+
                 Button {
                     HapticManager.playLightImpact()
                     currentScreen = .scoring
@@ -49,13 +49,10 @@ struct RoundCompleteModal: View {
     }
     
     private func completeEmoji(_ completedLevel: Bool) -> String {
-        let happyEmoji = ["🎉", "😄", "😎", "🤩", "🤑", "🔥"]
-        let sadEmoji = ["💥", "💩", "😈", "🥴", "😧", "😑", "😡", "🤬", "😵", "😩", "😢", "😭", "😒", "😔"]
-        
         if completedLevel {
-            return happyEmoji.randomElement()!
+            return RandomEmoji.happy()
         } else {
-            return sadEmoji.randomElement()!
+            return RandomEmoji.sad()
         }
     }
     

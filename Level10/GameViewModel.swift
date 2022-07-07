@@ -20,6 +20,7 @@ class GameViewModel: ObservableObject {
     @Published var playersReady = Set<String>()
     @Published var roundWinner: Player?
     @Published var selectedIndices = Set<Int>()
+    @Published var selectPlayerToSkip = false
     @Published var table: [String: [[Card]]] = [:]
     @Published var tempTable: [Int: [Card]] = [:]
     
@@ -33,6 +34,8 @@ class GameViewModel: ObservableObject {
     var levels: [String: Level] = [:]
     var roundNumber = 1
     var scores: [Score] = []
+    var settings = GameSettings(skipNextPlayer: false)
+    var skippedPlayers = Set<String>()
     
     private let joinCodeKey = "joinCode"
     
@@ -51,6 +54,14 @@ class GameViewModel: ObservableObject {
         for index in selectedIndices { cards.append(hand[index]) }
         if let newCard = newCard, newCardSelected { cards.append(newCard) }
         return cards
+    }
+    
+    var skippablePlayers: Set<String> {
+        let ids = players
+            .map { $0.id }
+            .filter { $0 != UserManager.shared.id && !skippedPlayers.contains($0) }
+        
+        return Set(ids)
     }
     
     init() {
@@ -77,6 +88,7 @@ class GameViewModel: ObservableObject {
         NotificationCenter.default.addObserver(self, selector: #selector(onHandUpdate), name: .handDidUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onRoundFinished), name: .roundDidFinish, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onRoundStart), name: .roundDidStart, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onSkippedPlayersUpdated), name: .skippedPlayersDidUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onTableUpdate), name: .tableDidUpdate, object: nil)
         
         maybeConnectToExistingGame()
@@ -153,6 +165,24 @@ class GameViewModel: ObservableObject {
         return self.players.first(where: { $0.id == id })
     }
     
+    func skipPlayer(id playerId: String) {
+        if !settings.skipNextPlayer,
+           skippablePlayers.contains(playerId),
+           selectedCards.count == 1,
+           let card = selectedCards.first,
+           card.value == .skip {
+            Task {
+                do {
+                    try await NetworkManager.shared.discardCard(card: card, playerToSkip: playerId)
+                } catch {
+                    print("Error received when skipping player", error)
+                }
+            }
+        } else {
+            print("Could not specify player to skip")
+        }
+    }
+    
     func toggleIndexSelected(_ index: Int) {
         if selectedIndices.contains(index) {
             selectedIndices.remove(index)
@@ -200,6 +230,9 @@ class GameViewModel: ObservableObject {
         roundWinner = nil
         scores = []
         selectedIndices.removeAll()
+        selectPlayerToSkip = false
+        settings = GameSettings(skipNextPlayer: false)
+        skippedPlayers.removeAll()
         table = [:]
         tempTable = [:]
     }
@@ -298,7 +331,8 @@ class GameViewModel: ObservableObject {
               let discardTop = notification.userInfo?["discardTop"] as? Card,
               let hand = notification.userInfo?["hand"] as? [Card],
               let levels = notification.userInfo?["levels"] as? [String: Level],
-              let players = notification.userInfo?["players"] as? [Player]
+              let players = notification.userInfo?["players"] as? [Player],
+              let settings = notification.userInfo?["settings"] as? GameSettings
         else { return }
         
         HapticManager.playWarning()
@@ -317,6 +351,9 @@ class GameViewModel: ObservableObject {
             playersReady.removeAll()
             roundNumber = 1
             roundWinner = nil
+            selectPlayerToSkip = false
+            self.settings = settings
+            skippedPlayers.removeAll()
             tempTable = [:]
             table = [:]
         }
@@ -333,6 +370,8 @@ class GameViewModel: ObservableObject {
               let playersReady = notification.userInfo?["playersReady"] as? Set<String>,
               let roundNumber = notification.userInfo?["roundNumber"] as? Int,
               let scores = notification.userInfo?["scores"] as? [Score],
+              let settings = notification.userInfo?["settings"] as? GameSettings,
+              let skippedPlayers = notification.userInfo?["skippedPlayers"] as? Set<String>,
               let table = notification.userInfo?["table"] as? [String: [[Card]]]
         else { return }
         
@@ -373,6 +412,9 @@ class GameViewModel: ObservableObject {
             self.roundNumber = roundNumber
             self.roundWinner = roundWinner
             self.scores = scores.sorted()
+            selectPlayerToSkip = false
+            self.settings = settings
+            self.skippedPlayers = skippedPlayers
             self.table = table
         }
     }
@@ -465,7 +507,8 @@ class GameViewModel: ObservableObject {
               let hand = notification.userInfo?["hand"] as? [Card],
               let handCounts = notification.userInfo?["handCounts"] as? [String: Int],
               let levels = notification.userInfo?["levels"] as? [String: Level],
-              let roundNumber = notification.userInfo?["roundNumber"] as? Int
+              let roundNumber = notification.userInfo?["roundNumber"] as? Int,
+              let settings = notification.userInfo?["settings"] as? GameSettings
         else { return }
         
         HapticManager.playWarning()
@@ -488,6 +531,9 @@ class GameViewModel: ObservableObject {
             roundWinner = nil
             self.scores = scores.sorted()
             selectedIndices = []
+            selectPlayerToSkip = false
+            self.settings = settings
+            skippedPlayers.removeAll()
             table = [:]
             tempTable = [:]
         }
@@ -498,6 +544,12 @@ class GameViewModel: ObservableObject {
         DispatchQueue.main.async {
             self.completedLevel = true
             self.tempTable = [:]
+        }
+    }
+    
+    @objc private func onSkippedPlayersUpdated(_ notification: Notification) {
+        if let skippedPlayers = notification.userInfo?["skippedPlayers"] as? Set<String> {
+            self.skippedPlayers = skippedPlayers
         }
     }
     
