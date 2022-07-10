@@ -10,6 +10,7 @@
 		D72E74652873D1A700CD61A3 /* SkipSelectModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = D72E74642873D1A700CD61A3 /* SkipSelectModal.swift */; };
 		D74492A42873D56A0003C5CF /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74492A32873D56A0003C5CF /* Constants.swift */; };
 		D74492A62879F7440003C5CF /* ErrorBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74492A52879F7440003C5CF /* ErrorBanner.swift */; };
+		D74492A8287B4FF20003C5CF /* LeaveConfirmModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74492A7287B4FF20003C5CF /* LeaveConfirmModal.swift */; };
 		D74835D52868C8B90043846C /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74835D42868C8B90043846C /* HapticManager.swift */; };
 		D74835D92868FD680043846C /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74835D82868FD680043846C /* NotificationManager.swift */; };
 		D74835DB2869005F0043846C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74835DA2869005F0043846C /* AppDelegate.swift */; };
@@ -42,6 +43,7 @@
 		D72E74642873D1A700CD61A3 /* SkipSelectModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkipSelectModal.swift; sourceTree = "<group>"; };
 		D74492A32873D56A0003C5CF /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		D74492A52879F7440003C5CF /* ErrorBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorBanner.swift; sourceTree = "<group>"; };
+		D74492A7287B4FF20003C5CF /* LeaveConfirmModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaveConfirmModal.swift; sourceTree = "<group>"; };
 		D74835D42868C8B90043846C /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
 		D74835D82868FD680043846C /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		D74835DA2869005F0043846C /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -140,6 +142,7 @@
 				D7BF72F3283198080051E689 /* L10Button.swift */,
 				D7BF72F82831A89C0051E689 /* L10TextField.swift */,
 				D7872F35284C17BD004AA89E /* RoundCompleteModal.swift */,
+				D74492A7287B4FF20003C5CF /* LeaveConfirmModal.swift */,
 				D72E74642873D1A700CD61A3 /* SkipSelectModal.swift */,
 				D7BF72FE2831B77D0051E689 /* StatusIndicator.swift */,
 			);
@@ -288,6 +291,7 @@
 				D7C70E6A283AC21C00C4A41B /* GameViewModel.swift in Sources */,
 				D7872F36284C17BD004AA89E /* RoundCompleteModal.swift in Sources */,
 				D762F4E1284D6DDF008FADA4 /* ScoreView.swift in Sources */,
+				D74492A8287B4FF20003C5CF /* LeaveConfirmModal.swift in Sources */,
 				D7A62EFF28383B4200B8E466 /* UserManager.swift in Sources */,
 				D7BF72FD2831B4990051E689 /* LobbyView.swift in Sources */,
 				D7BF72FB2831A9B50051E689 /* JoinGameView.swift in Sources */,

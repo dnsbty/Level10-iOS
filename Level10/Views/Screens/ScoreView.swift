@@ -11,7 +11,7 @@ struct ScoreView: View {
     @EnvironmentObject var viewModel: GameViewModel
     
     var body: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             Color.violet700.ignoresSafeArea()
             
             VStack {
@@ -87,13 +87,26 @@ struct ScoreView: View {
                     
                     Button {
                         HapticManager.playLightImpact()
-                        NetworkManager.shared.leaveGame()
+                        withAnimation {
+                            viewModel.showLeaveModal = true
+                        }
                     } label: {
                         L10Button(text: "Leave Game", type: .ghost)
-                    }
+                    }.padding(.bottom)
                 }
             }
-        }
+            
+            if viewModel.showLeaveModal {
+                Color(uiColor: .systemBackground).opacity(0.8)
+                    .transition(.opacity)
+                    .animation(.easeInOut, value: viewModel.showLeaveModal)
+                
+                LeaveConfirmModal(showModal: $viewModel.showLeaveModal)
+                    .zIndex(2)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .animation(.easeInOut.delay(0.1), value: viewModel.showLeaveModal)
+            }
+        }.ignoresSafeArea()
     }
     
     private func headerLabelText() -> String {

@@ -139,30 +139,54 @@ struct GameView: View {
                 .padding(.horizontal)
             }
             
-            if let winner = viewModel.roundWinner {
-                ZStack(alignment: .bottom) {
+            ZStack(alignment: .bottom) {
+                if let winner = viewModel.roundWinner {
                     Color(uiColor: .systemBackground).opacity(0.8)
+                        .transition(.opacity)
+                        .animation(.easeInOut, value: viewModel.showLeaveModal)
                     
                     RoundCompleteModal(currentScreen: $viewModel.currentScreen,
                                        completedLevel: viewModel.completedLevel,
                                        gameOver: viewModel.gameOver,
                                        winner: winner)
-                }.ignoresSafeArea()
-            } else if viewModel.selectPlayerToSkip {
-                ZStack(alignment: .bottom) {
+                    .zIndex(1)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .animation(.easeInOut, value: viewModel.showLeaveModal)
+                } else if viewModel.selectPlayerToSkip {
                     Color(uiColor: .systemBackground).opacity(0.8)
+                        .transition(.opacity)
+                        .animation(.easeInOut, value: viewModel.showLeaveModal)
                     
                     SkipSelectModal(displayModal: $viewModel.selectPlayerToSkip,
                                     players: viewModel.players,
                                     skippedPlayers: viewModel.skippedPlayers) { playerId in
                         viewModel.skipPlayer(id: playerId)
                     }
-                }.ignoresSafeArea()
-            }
+                    .zIndex(1)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .animation(.easeInOut, value: viewModel.showLeaveModal)
+                } else if viewModel.showLeaveModal {
+                    Color(uiColor: .systemBackground).opacity(0.8)
+                        .transition(.opacity)
+                        .animation(.easeInOut, value: viewModel.showLeaveModal)
+                        .onTapGesture {
+                            withAnimation {
+                                viewModel.showLeaveModal = false
+                            }
+                        }
+                    
+                    LeaveConfirmModal(showModal: $viewModel.showLeaveModal)
+                        .zIndex(2)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .animation(.easeInOut.delay(0.1), value: viewModel.showLeaveModal)
+                }
+            }.ignoresSafeArea()
         }
         .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local).onEnded({ value in
             if value.translation.width > 50 {
-                NetworkManager.shared.leaveLobby()
+                withAnimation {
+                    viewModel.showLeaveModal = true
+                }
             }
         }))
     }
@@ -304,7 +328,12 @@ struct GameView: View {
     }
     
     private func drawCard(source: DrawSource) {
-        guard !viewModel.hasDrawn else { return }
+        guard !viewModel.hasDrawn else {
+            // TODO: Display error
+            return
+        }
+        
+        HapticManager.playMediumImpact()
         
         Task {
             do {
@@ -335,7 +364,8 @@ struct GameView: View {
                 
         if !viewModel.settings.skipNextPlayer,
            viewModel.selectedCards.first?.value == .skip {
-            viewModel.selectPlayerToSkip = true
+            HapticManager.playLightImpact()
+            withAnimation { viewModel.selectPlayerToSkip = true }
         } else {
             Task {
                 do {

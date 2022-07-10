@@ -30,7 +30,8 @@ struct SkipSelectModal: View {
                     let alreadySkipped = skippedPlayers.contains(player.id)
                     
                     Button {
-                        displayModal = false
+                        withAnimation { displayModal = false }
+                        HapticManager.playMediumImpact()
                         completionHandler(player.id)
                     } label: {
                         L10Button(text: player.name, type: .secondary, disabled: alreadySkipped)
@@ -39,7 +40,11 @@ struct SkipSelectModal: View {
                     .disabled(alreadySkipped)
                 }
                 
-                L10Button(text: "Discard something else", type: .ghost)
+                Button {
+                    withAnimation { displayModal = false }
+                } label: {
+                    L10Button(text: "Discard something else", type: .ghost)
+                }
             }
         }
     }

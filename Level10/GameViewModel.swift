@@ -25,6 +25,7 @@ class GameViewModel: ObservableObject {
     @Published var roundWinner: Player?
     @Published var selectedIndices = Set<Int>()
     @Published var selectPlayerToSkip = false
+    @Published var showLeaveModal = false
     @Published var table: [String: [[Card]]] = [:]
     @Published var tempTable: [Int: [Card]] = [:]
     
@@ -237,6 +238,7 @@ class GameViewModel: ObservableObject {
         selectedIndices.removeAll()
         selectPlayerToSkip = false
         settings = GameSettings(skipNextPlayer: false)
+        showLeaveModal = false
         skippedPlayers.removeAll()
         table = [:]
         tempTable = [:]
@@ -329,7 +331,7 @@ class GameViewModel: ObservableObject {
         
         DispatchQueue.main.async {
             self.gameOver = true
-            self.roundWinner = winner
+            withAnimation { self.roundWinner = winner }
             self.scores = scores.sorted()
             
             if let gameWinner = scores.first?.playerId,
@@ -429,7 +431,7 @@ class GameViewModel: ObservableObject {
             self.playersReady = playersReady
             self.remainingPlayers = remainingPlayers
             self.roundNumber = roundNumber
-            self.roundWinner = roundWinner
+            withAnimation { self.roundWinner = roundWinner }
             self.scores = scores.sorted()
             selectPlayerToSkip = false
             self.settings = settings
@@ -452,8 +454,6 @@ class GameViewModel: ObservableObject {
                 }
             }
         }
-        
-        HapticManager.playMediumImpact()
         
         DispatchQueue.main.async { [self] in
             drawnCard = nil
@@ -537,7 +537,7 @@ class GameViewModel: ObservableObject {
         
         DispatchQueue.main.async { [self] in
             playersReady.removeAll()
-            roundWinner = winner
+            withAnimation { roundWinner = winner }
             self.scores = scores.sorted()
         }
     }

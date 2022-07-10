@@ -370,9 +370,6 @@ final class NetworkManager {
             return
         }
         
-        let attemptNumber = self.createdGameConnectMaxAttempts - remainingAttempts
-        print("Attempting to connect to created game. This is attempt number \(attemptNumber)")
-        
         self.connectToGame(joinCode: joinCode) { error in
             if let error = error {
                 if case .notFound = error, remainingAttempts > 0 {
