@@ -37,6 +37,7 @@ enum NetworkError: Error {
 final class NetworkManager {
     static let shared = NetworkManager()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "NetworkManager")
+    private let createdGameConnectMaxAttempts = 6
     
     private var authToken: String?
     private var lobbyChannel: Channel?
@@ -143,14 +144,7 @@ final class NetworkManager {
             .push("create_game", payload: params)
             .receive("ok") { response in
                 guard let joinCode = response.payload["joinCode"] as? String else { return }
-                self.gameChannel = socket.channel("game:\(joinCode)")
-                self.connectToGame() { error in
-                    if let error = error {
-                        print("Error connecting to created game", error)
-                        return
-                    }
-                    NotificationCenter.default.post(name: .didCreateGame, object: nil, userInfo: ["joinCode": joinCode])
-                }
+                self.connectToCreatedGame(joinCode: joinCode, remainingAttempts: self.createdGameConnectMaxAttempts)
             }
             .receive("error") { response in
                 NotificationCenter.default.post(name: .didReceiveGameCreationError, object: nil, userInfo: ["error": response.payload["response"] ?? ""])
@@ -266,9 +260,7 @@ final class NetworkManager {
     func joinGame(withCode joinCode: String, displayName name: String) async throws {
         guard let socket = socket else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
-        let params = ["displayName": name]
-        self.gameChannel = socket.channel("game:\(joinCode)", params: params)
-        self.connectToGame() { error in
+        self.connectToGame(joinCode: joinCode, params: ["displayName": name]) { error in
             if let error = error {
                 NotificationCenter.default.post(name: .gameJoinError, object: nil, userInfo: ["error": error])
             } else {
@@ -316,8 +308,7 @@ final class NetworkManager {
     func reconnectToGame(withCode joinCode: String) async throws {
         guard let socket = socket else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
-        self.gameChannel = socket.channel("game:\(joinCode)")
-        self.connectToGame(nil)
+        self.connectToGame(joinCode: "game:\(joinCode)", completionHandler: nil)
     }
     
     /**
@@ -366,8 +357,49 @@ final class NetworkManager {
     
     // MARK: Private functions
     
-    private func connectToGame(_ completionHandler: ((GameConnectError?) -> Void)?) {
-        guard let gameChannel = gameChannel, !gameChannel.isJoined else { return }
+    private func connectDelay(for n: Int) -> Int {
+        let maxDelay = 3200
+        let delay = Int(pow(2.0, Double(n))) * 100
+        let jitter = Int.random(in: 0...100)
+        return min(delay + jitter, maxDelay)
+    }
+    
+    private func connectToCreatedGame(joinCode: String, remainingAttempts: Int) {
+        guard socket != nil else {
+            NotificationCenter.default.post(name: .didReceiveGameCreationError, object: nil, userInfo: ["error": "socket error"])
+            return
+        }
+        
+        let attemptNumber = self.createdGameConnectMaxAttempts - remainingAttempts
+        print("Attempting to connect to created game. This is attempt number \(attemptNumber)")
+        
+        self.connectToGame(joinCode: joinCode) { error in
+            if let error = error {
+                if case .notFound = error, remainingAttempts > 0 {
+                    let delay = self.connectDelay(for: self.createdGameConnectMaxAttempts - remainingAttempts)
+                    DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + .milliseconds(delay)) {
+                        self.connectToCreatedGame(joinCode: joinCode, remainingAttempts: remainingAttempts - 1)
+                    }
+                    return
+                    
+                } else {
+                    print("Error connecting to created game", error)
+                    return
+                }
+            }
+            
+            NotificationCenter.default.post(name: .didCreateGame, object: nil, userInfo: ["joinCode": joinCode])
+        }
+    }
+    
+    private func connectToGame(joinCode: String, completionHandler: ((GameConnectError?) -> Void)?) {
+        connectToGame(joinCode: joinCode, params: [:], completionHandler: completionHandler)
+    }
+    
+    private func connectToGame(joinCode: String, params: [String: String], completionHandler: ((GameConnectError?) -> Void)?) {
+        guard let socket = socket else { return }
+        self.gameChannel = socket.channel("game:\(joinCode)", params: params)
+        guard let gameChannel = gameChannel else { return }
         
         presence = Presence(channel: gameChannel)
         presence!.onSync {

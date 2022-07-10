@@ -312,7 +312,12 @@ class GameViewModel: ObservableObject {
         HapticManager.playError()
         DispatchQueue.main.async {
             withAnimation {
-                self.error = "Our servers exploded, and the game couldn't be created. Please try again later 🤯"
+                switch notification.userInfo?["error"] as? String ?? "" {
+                case "socket error":
+                    self.error = "The network connection exploded, and couldn't connect to the created game. Please force quit the app and try again 🤯"
+                default:
+                    self.error = "Our servers exploded, and the game couldn't be created. Please try again later 🤯"
+                }
             }
         }
     }
