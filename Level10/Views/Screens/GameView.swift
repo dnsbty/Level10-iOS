@@ -175,7 +175,7 @@ struct GameView: View {
                             }
                         }
                     
-                    LeaveConfirmModal(showModal: $viewModel.showLeaveModal)
+                    LeaveConfirmModal(showModal: $viewModel.showLeaveModal, midRound: true)
                         .zIndex(2)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                         .animation(.easeInOut.delay(0.1), value: viewModel.showLeaveModal)
@@ -367,6 +367,8 @@ struct GameView: View {
             HapticManager.playLightImpact()
             withAnimation { viewModel.selectPlayerToSkip = true }
         } else {
+            HapticManager.playMediumImpact()
+            
             Task {
                 do {
                     try await NetworkManager.shared.discardCard(card: viewModel.selectedCards.first!, playerToSkip: nil)
