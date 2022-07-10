@@ -6,12 +6,14 @@
 //
 
 import Foundation
+import SwiftUI
 
 class GameViewModel: ObservableObject {
     @Published var connectedPlayers = Set<String>()
     @Published var currentPlayer: String?
     @Published var currentScreen = Screen.home
     @Published var discardPileTopCard: Card?
+    @Published var error: String?
     @Published var gameOver = false
     @Published var hand: [Card] = []
     @Published var handCounts: [String: Int] = [:]
@@ -307,7 +309,12 @@ class GameViewModel: ObservableObject {
     }
     
     @objc private func onGameCreationError(_ notification: Notification) {
-        // TODO: Show an alert if game creation fails
+        HapticManager.playError()
+        DispatchQueue.main.async {
+            withAnimation {
+                self.error = "Our servers exploded, and the game couldn't be created. Please try again later 🤯"
+            }
+        }
     }
     
     @objc private func onGameOver(_ notification: Notification) {
@@ -455,7 +462,23 @@ class GameViewModel: ObservableObject {
     @objc private func onJoinError(_ notification: Notification) {
         guard let joinError = notification.userInfo?["error"] as? GameConnectError else { return }
         HapticManager.playError()
-        print("Error joining game", joinError)
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            withAnimation {
+                switch joinError {
+                case .alreadyStarted:
+                    self.error = "The game you're trying to join has already started. Looks like you need some new friends 😬"
+                case .full:
+                    self.error = "That game is already full. Looks like you were the slow one in the group 😩"
+                case .notFound:
+                    self.error = "That join code doesn't exist. Are you trying to hack us? 🤨"
+                case .unknownError(let errorString):
+                    self.error = "An unexpected error occurred: \(errorString)"
+                }
+            }
+        }
     }
     
     @objc private func onJoinGame(_ notification: Notification) {

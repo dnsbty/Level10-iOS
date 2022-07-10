@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct CreateGameView: View {
-    @Environment(\.currentScreen) var currentScreen
+    @EnvironmentObject var viewModel: GameViewModel
     @State var displayName = UserManager.shared.preferenceString(forKey: .displayName) ?? ""
     @State var skipNextPlayer = UserManager.shared.preferenceBool(forKey: .skipNextPlayer) ?? false
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             Color.violet700.ignoresSafeArea()
 
             VStack {
@@ -60,10 +60,21 @@ struct CreateGameView: View {
 
                 Button {
                     HapticManager.playLightImpact()
-                    currentScreen.wrappedValue = .home
+                    viewModel.currentScreen = .home
                 } label: {
                     L10Button(text: "Nevermind", type: .ghost).padding(.horizontal)
                 }
+            }
+            
+            if let creationError = viewModel.error {
+                ErrorBanner(message: creationError, displaySeconds: 5) {
+                    withAnimation {
+                        viewModel.error = nil
+                    }
+                }
+                .zIndex(1)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .animation(.easeInOut, value: viewModel.error)
             }
         }
     }
@@ -76,8 +87,10 @@ struct CreateGameView: View {
             do {
                 try await NetworkManager.shared.createGame(withDisplayName: displayName,
                                                    settings: GameSettings(skipNextPlayer: skipNextPlayer))
-            } catch {
-                print("Error creating game: ", error)
+            } catch NetworkError.socketNotConnected {
+                viewModel.error = "The socket isn't connected 🤓"
+            } catch NetworkError.channelNotJoined {
+                viewModel.error = "The socket isn't configured properly 🤓"
             }
         }
     }
@@ -86,5 +99,6 @@ struct CreateGameView: View {
 struct CreateGameView_Previews: PreviewProvider {
     static var previews: some View {
         CreateGameView()
+            .environmentObject(GameViewModel())
     }
 }

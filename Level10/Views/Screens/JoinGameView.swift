@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct JoinGameView: View {
-    @Environment(\.currentScreen) var currentScreen
+    @EnvironmentObject var viewModel: GameViewModel
     @State var displayName = UserManager.shared.preferenceString(forKey: .displayName) ?? ""
     @State var joinCode = ""
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             Color.violet700.ignoresSafeArea()
 
             VStack {
@@ -49,10 +49,21 @@ struct JoinGameView: View {
 
                 Button {
                     HapticManager.playLightImpact()
-                    currentScreen.wrappedValue = .home
+                    viewModel.currentScreen = .home
                 } label: {
                     L10Button(text: "Nevermind", type: .ghost).padding(.horizontal)
                 }
+            }
+            
+            if let joinError = viewModel.error {
+                ErrorBanner(message: joinError, displaySeconds: 5) {
+                    withAnimation {
+                        viewModel.error = nil
+                    }
+                }
+                .zIndex(1)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .animation(.easeInOut, value: viewModel.error)
             }
         }
     }
@@ -64,7 +75,7 @@ struct JoinGameView: View {
             do {
                 try await NetworkManager.shared.joinGame(withCode: joinCode, displayName: displayName)
             } catch {
-                print("Error joining game: ", error)
+                viewModel.error = "The socket isn't connected 🤓"
             }
         }
     }
@@ -73,5 +84,6 @@ struct JoinGameView: View {
 struct JoinGameView_Previews: PreviewProvider {
     static var previews: some View {
         JoinGameView()
+            .environmentObject(GameViewModel())
     }
 }
