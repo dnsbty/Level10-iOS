@@ -308,7 +308,7 @@ final class NetworkManager {
     func reconnectToGame(withCode joinCode: String) async throws {
         guard let socket = socket else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
-        self.connectToGame(joinCode: "game:\(joinCode)", completionHandler: nil)
+        self.connectToGame(joinCode: joinCode, completionHandler: nil)
     }
     
     /**
