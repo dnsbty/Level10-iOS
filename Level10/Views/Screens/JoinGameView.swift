@@ -66,6 +66,11 @@ struct JoinGameView: View {
                 .animation(.easeInOut, value: viewModel.error)
             }
         }
+        .onAppear {
+            if let joinCode = viewModel.joinCode {
+                self.joinCode = joinCode
+            }
+        }
     }
     
     private func joinGame() {

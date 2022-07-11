@@ -48,6 +48,7 @@ struct Level10App: App {
             }
             .environment(\.currentScreen, $viewModel.currentScreen)
             .environmentObject(viewModel)
+            .onOpenURL { url in viewModel.handleUrlPathComponents(url.pathComponents) }
         }
     }
 }

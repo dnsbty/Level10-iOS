@@ -165,6 +165,26 @@ class GameViewModel: ObservableObject {
         
     }
     
+    func handleUrlPathComponents(_ pathComponents: [String]) {
+        // TODO: Let the user leave the current game when a link is opened
+        guard players.count == 0 else { return }
+        
+        guard pathComponents.count > 1 else {
+            currentScreen = .home
+            return
+        }
+        
+        switch pathComponents[1] {
+        case "create":
+            currentScreen = .create
+        case "join":
+            currentScreen = .join
+            if pathComponents.count > 2 { joinCode = pathComponents[2] }
+        default:
+            currentScreen = .home
+        }
+    }
+    
     func isConnected(playerId: String) -> Bool {
         return connectedPlayers.contains(playerId)
     }
