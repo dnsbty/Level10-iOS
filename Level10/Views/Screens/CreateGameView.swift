@@ -67,7 +67,7 @@ struct CreateGameView: View {
             }
             
             if let creationError = viewModel.error {
-                ErrorBanner(message: creationError, displaySeconds: 5) {
+                ErrorBanner(message: creationError, displaySeconds: 5, type: .error) {
                     withAnimation {
                         viewModel.error = nil
                     }

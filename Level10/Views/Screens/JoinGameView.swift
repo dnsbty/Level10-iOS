@@ -56,7 +56,7 @@ struct JoinGameView: View {
             }
             
             if let joinError = viewModel.error {
-                ErrorBanner(message: joinError, displaySeconds: 5) {
+                ErrorBanner(message: joinError, displaySeconds: 5, type: .error) {
                     withAnimation {
                         viewModel.error = nil
                     }

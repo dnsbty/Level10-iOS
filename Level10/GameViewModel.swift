@@ -100,7 +100,16 @@ class GameViewModel: ObservableObject {
     }
     
     func addToPlayerTable(playerId: String, index: Int) {
-        guard completedLevel, let playerTable = table[playerId], playerTable.count > index else { return }
+        guard completedLevel else {
+            withAnimation { error = "Finish up your own level before you worry about others 🤓" }
+            return
+        }
+        
+        guard let playerTable = table[playerId], playerTable.count > index else {
+            withAnimation { error = "You can only play off others' hands once they've finished the level 😅" }
+            return
+        }
+        
         HapticManager.playMediumImpact()
         
         Task {
@@ -111,7 +120,10 @@ class GameViewModel: ObservableObject {
     func addToTable(_ index: Int) {
         let level = levels[UserManager.shared.id!]!
         let levelGroup = level.groups[index]
-        guard levelGroup.isValid(selectedCards) else { return }
+        guard levelGroup.isValid(selectedCards) else {
+            withAnimation { error = "Those cards don't match the group silly 😋" }
+            return
+        }
         
         if let _ = tempTable[index] {
             tempTable[index]!.append(contentsOf: selectedCards.sorted())
@@ -261,11 +273,51 @@ class GameViewModel: ObservableObject {
     }
     
     @objc private func onAddToTableError(_ notification: Notification) {
-        // TODO: Show an alert if adding to the table fails
+        guard let error = notification.userInfo?["error"] as? String else { return }
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            var message: String
+            
+            switch error {
+            case "invalid_group":
+                message = "Those cards don't match the group silly 😋"
+            case "level_incomplete":
+                message = "Finish up your own level before you worry about others 🤓"
+            case "needs_to_draw":
+                message = "You need to draw before you can do that 😂"
+            case "not_your_turn":
+                message = "Watch it bud! It's not your turn yet 😠"
+            default:
+                message = "An unexpected error occurred. Please try force quitting the app and then try again 🤯"
+            }
+            
+            withAnimation { self.error = message }
+        }
     }
     
     @objc private func onCardDrawError(_ notification: Notification) {
-        // TODO: Show an alert if drawing a card fails
+        guard let error = notification.userInfo?["error"] as? String else { return }
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            var message: String
+            
+            switch error {
+            case "already_drawn":
+                message = "You can't draw twice in the same turn silly 😋"
+            case "empty_discard_pile":
+                message = "What are you trying to draw? The discard pile is empty... 🕵️‍♂️"
+            case "skip":
+                message = "You can't draw a skip that has already been discarded 😂"
+            case "not_your_turn":
+                message = "Watch it bud! It's not your turn yet 😠"
+            default:
+                message = "An unexpected error occurred. Please try force quitting the app and then try again 🤯"
+            }
+            
+            withAnimation { self.error = message }
+        }
     }
     
     @objc private func onCreateGame(_ notification: Notification) {
@@ -288,6 +340,31 @@ class GameViewModel: ObservableObject {
             hasDrawn = false
             
             if isCurrentPlayer { HapticManager.playWarning() }
+        }
+    }
+    
+    @objc private func onDiscardError(_ notification: Notification) {
+        let error = notification.userInfo?["error"] as? String
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            var message: String
+            switch error {
+            case "no_card":
+                message = "You need to select a card in your hand before you can discard it silly 😄"
+            case "already_skipped":
+                message = "They were already skipped... Continue that vendetta on your next turn instead 😈"
+            case "choose_skip_target":
+                message = "I'm not sure what you just did, but I don't like it 🤨"
+            case "not_your_turn":
+                message = "What are you up to? You can't discard when it's not your turn... 🕵️‍♂️"
+            case "need_to_draw":
+                message = "You can't discard when you haven't drawn yet 🤓"
+            default:
+                message = "I'm not sure what you just did, but I don't like it 🤨"
+            }
+            
+            withAnimation { self.error = message }
         }
     }
     

@@ -7,9 +7,15 @@
 
 import SwiftUI
 
+enum BannerType {
+    case error
+    case warning
+}
+
 struct ErrorBanner: View {
     @State var progress: Double = 0
     @State var tick = 0.0
+    var type: BannerType = .error
     
     let fps = 60.0
     let finalTick: Double
@@ -17,10 +23,29 @@ struct ErrorBanner: View {
     let onClose: (() -> ())
     let timer = Timer.publish(every: 1 / 60, on: .main, in: .common).autoconnect()
     
-    init(message: String, displaySeconds: Double, onClose: @escaping (() -> ())) {
+    init(message: String, displaySeconds: Double, type: BannerType, onClose: @escaping (() -> ())) {
         finalTick = round(displaySeconds * fps)
         self.message = message
+        self.type = type
         self.onClose = onClose
+    }
+    
+    var bgColor: Color {
+        switch type {
+        case .error:
+            return .red500
+        case .warning:
+            return .yellow500
+        }
+    }
+    
+    var shadowColor: Color {
+        switch type {
+        case .error:
+            return .red700
+        case .warning:
+            return .yellow600
+        }
     }
     
     var body: some View {
@@ -30,8 +55,9 @@ struct ErrorBanner: View {
                     .lineSpacing(2.0)
                     .foregroundColor(.white)
                     .font(.system(size: 18.0, weight: .semibold, design: .rounded))
-                    .shadow(color: .red700, radius: 2, x: 0, y: 2)
+                    .shadow(color: shadowColor, radius: 2, x: 0, y: 2)
                     .padding(.horizontal)
+                    .padding(.bottom)
 
                 Button {
                     onClose()
@@ -51,14 +77,14 @@ struct ErrorBanner: View {
                         Image(systemName: "xmark")
                             .font(Font.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
+                            .shadow(color: shadowColor, radius: 2, x: 0, y: 2)
                     }
                     .frame(width: 44, height: 44)
                 }
             }
-            .padding()
             .frame(maxWidth: .infinity)
-            .background(Color.red500)
-            .shadow(color: .red700, radius: 8.0, x: 0, y: 0)
+            .background(bgColor)
+            .shadow(color: shadowColor.opacity(0.5), radius: 4.0, x: 0, y: 0)
             
             Spacer()
         }
@@ -86,8 +112,9 @@ struct ErrorBanner_Previews: PreviewProvider {
             JoinGameView(displayName: "Dennis", joinCode: "ABCD")
                 .environmentObject(viewModel)
             
-            ErrorBanner(message: "That join code doesn't exist. Let's make this a lot longer to Are you trying to hack the game? 🤨",
-                        displaySeconds: 5) {}
+            ErrorBanner(message: "You have to draw a card before you can do anything else 😃",
+                        displaySeconds: 5,
+                        type: .warning) {}
         }
     }
 }

@@ -31,6 +31,7 @@ final class UserManager {
     
     private init() {
         if let token = getStoredToken() {
+            print("Got token", token)
             if let id = getId() {
                 self.token = token
                 self.id = id

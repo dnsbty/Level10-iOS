@@ -139,6 +139,17 @@ struct GameView: View {
                 .padding(.horizontal)
             }
             
+            ZStack(alignment: .top) {
+                if let joinError = viewModel.error {
+                    ErrorBanner(message: joinError, displaySeconds: 5, type: .warning) {
+                        withAnimation { viewModel.error = nil }
+                    }
+                    .zIndex(1)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .animation(.easeInOut, value: viewModel.error)
+                }
+            }
+            
             ZStack(alignment: .bottom) {
                 if let winner = viewModel.roundWinner {
                     Color(uiColor: .systemBackground).opacity(0.8)
@@ -329,7 +340,7 @@ struct GameView: View {
     
     private func drawCard(source: DrawSource) {
         guard !viewModel.hasDrawn else {
-            // TODO: Display error
+            withAnimation { viewModel.error = "You can't draw twice in the same turn silly 😋" }
             return
         }
         
@@ -339,8 +350,7 @@ struct GameView: View {
             do {
                 try await NetworkManager.shared.drawCard(source: source)
             } catch {
-                // TODO: Display the errors returned here
-                print("Error drawing card")
+                withAnimation { viewModel.error = "An unexpected error occurred. Please try force quitting the app and then try again 🤯" }
             }
         }
         
@@ -348,17 +358,33 @@ struct GameView: View {
     
     private func onTapDiscardPile() {
         guard viewModel.currentPlayer == UserManager.shared.id else {
-            // TODO: Display error
+            withAnimation { viewModel.error = "Watch it bud! It's not your turn yet 😠" }
             return
         }
         
         guard viewModel.hasDrawn else {
+            guard viewModel.discardPileTopCard != nil else {
+                withAnimation { viewModel.error = "What are you trying to draw? The discard pile is empty... 🕵️‍♂️" }
+                return
+            }
+            
+            guard viewModel.discardPileTopCard!.value != .skip else {
+                withAnimation { viewModel.error = "You can't draw a skip that has already been discarded 😂" }
+                return
+            }
+            
             drawCard(source: .discardPile)
             return
         }
         
         guard viewModel.selectedCards.count == 1 else {
-            // TODO: Display error
+            withAnimation {
+                if viewModel.selectedCards.count == 0 {
+                    viewModel.error = "You need to select a card in your hand before you can discard it silly 😄"
+                } else {
+                    viewModel.error = "Nice try, but you can only discard one card at a time 🧐"
+                }
+            }
             return
         }
                 
@@ -373,17 +399,22 @@ struct GameView: View {
                 do {
                     try await NetworkManager.shared.discardCard(card: viewModel.selectedCards.first!, playerToSkip: nil)
                 } catch {
-                    // TODO: Display errors returned here
-                    print("Error discarding card")
+                    withAnimation { viewModel.error = "An unexpected error occurred. Please try force quitting the app and then try again 🤯" }
                 }
             }
         }
     }
     
     private func onTapDrawPile() {
-        guard viewModel.currentPlayer == UserManager.shared.id,
-              !viewModel.hasDrawn
-        else { return }
+        guard viewModel.currentPlayer == UserManager.shared.id else {
+            withAnimation { viewModel.error = "Watch it bud! It's not your turn yet 😠" }
+            return
+        }
+        
+        guard !viewModel.hasDrawn else {
+            withAnimation { viewModel.error = "You can't draw twice in the same turn silly 😋" }
+            return
+        }
         
         drawCard(source: .drawPile)
     }

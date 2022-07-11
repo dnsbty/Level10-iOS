@@ -96,17 +96,19 @@ struct ScoreView: View {
                 }
             }
             
-            if viewModel.showLeaveModal {
-                Color(uiColor: .systemBackground).opacity(0.8)
-                    .transition(.opacity)
-                    .animation(.easeInOut, value: viewModel.showLeaveModal)
-                
-                LeaveConfirmModal(showModal: $viewModel.showLeaveModal)
-                    .zIndex(2)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .animation(.easeInOut.delay(0.1), value: viewModel.showLeaveModal)
-            }
-        }.ignoresSafeArea()
+            ZStack(alignment: .bottom) {
+                if viewModel.showLeaveModal {
+                    Color(uiColor: .systemBackground).opacity(0.8)
+                        .transition(.opacity)
+                        .animation(.easeInOut, value: viewModel.showLeaveModal)
+                    
+                    LeaveConfirmModal(showModal: $viewModel.showLeaveModal)
+                        .zIndex(2)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .animation(.easeInOut.delay(0.1), value: viewModel.showLeaveModal)
+                }
+            }.ignoresSafeArea()
+        }
     }
     
     private func headerLabelText() -> String {
