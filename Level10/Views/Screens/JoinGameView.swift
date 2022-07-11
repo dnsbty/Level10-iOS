@@ -40,11 +40,14 @@ struct JoinGameView: View {
 
                 Spacer()
 
-
-                Button {
-                    joinGame()
-                } label: {
-                    L10Button(text: "Join Game", type: .primary).padding()
+                if viewModel.waitingOnAction {
+                    L10Button(text: "Joining Game...", type: .primary, disabled: true).padding()
+                } else {
+                    Button {
+                        joinGame()
+                    } label: {
+                        L10Button(text: "Join Game", type: .primary).padding()
+                    }
                 }
 
                 Button {
@@ -74,13 +77,16 @@ struct JoinGameView: View {
     }
     
     private func joinGame() {
+        guard !viewModel.waitingOnAction else { return }
+        viewModel.waitingOnAction = true
         UserManager.shared.rememberPreference(displayName, forKey: .displayName)
         
         Task {
             do {
                 try await NetworkManager.shared.joinGame(withCode: joinCode, displayName: displayName)
             } catch {
-                viewModel.error = "The socket isn't connected 🤓"
+                viewModel.waitingOnAction = false
+                withAnimation { viewModel.error = "The socket isn't connected 🤓" }
             }
         }
     }

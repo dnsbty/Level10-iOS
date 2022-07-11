@@ -51,11 +51,15 @@ struct CreateGameView: View {
                 .padding()
 
                 Spacer()
-
-                Button {
-                    createGame()
-                } label: {
-                    L10Button(text: "Create Game", type: .primary).padding()
+                
+                if viewModel.waitingOnAction {
+                    L10Button(text: "Creating Game...", type: .primary, disabled: true).padding()
+                } else {
+                    Button {
+                        createGame()
+                    } label: {
+                        L10Button(text: "Create Game", type: .primary).padding()
+                    }
                 }
 
                 Button {
@@ -80,6 +84,8 @@ struct CreateGameView: View {
     }
 
     private func createGame() {
+        guard !viewModel.waitingOnAction else { return }
+        viewModel.waitingOnAction = true
         UserManager.shared.rememberPreference(displayName, forKey: .displayName)
         UserManager.shared.rememberPreference(skipNextPlayer, forKey: .skipNextPlayer)
 
@@ -88,9 +94,11 @@ struct CreateGameView: View {
                 try await NetworkManager.shared.createGame(withDisplayName: displayName,
                                                    settings: GameSettings(skipNextPlayer: skipNextPlayer))
             } catch NetworkError.socketNotConnected {
-                viewModel.error = "The socket isn't connected 🤓"
+                viewModel.waitingOnAction = false
+                withAnimation { viewModel.error = "The socket isn't connected 🤓" }
             } catch NetworkError.channelNotJoined {
-                viewModel.error = "The socket isn't configured properly 🤓"
+                viewModel.waitingOnAction = false
+                withAnimation { viewModel.error = "The socket isn't configured properly 🤓" }
             }
         }
     }

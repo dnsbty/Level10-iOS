@@ -47,10 +47,14 @@ struct LobbyView: View {
                 Spacer()
 
                 if viewModel.isCreator {
-                    Button {
-                        NetworkManager.shared.startGame()
-                    } label: {
-                        L10Button(text: "Start Game", type: .primary).padding()
+                    if viewModel.waitingOnAction {
+                        L10Button(text: "Starting Game...", type: .primary, disabled: true).padding()
+                    } else {
+                        Button {
+                            NetworkManager.shared.startGame()
+                        } label: {
+                            L10Button(text: "Start Game", type: .primary).padding()
+                        }
                     }
                 }
 

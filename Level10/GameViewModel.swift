@@ -28,6 +28,7 @@ class GameViewModel: ObservableObject {
     @Published var showLeaveModal = false
     @Published var table: [String: [[Card]]] = [:]
     @Published var tempTable: [Int: [Card]] = [:]
+    @Published var waitingOnAction = false
     
     var completedLevel = false
     var drawnCard: Card?
@@ -274,6 +275,7 @@ class GameViewModel: ObservableObject {
         skippedPlayers.removeAll()
         table = [:]
         tempTable = [:]
+        waitingOnAction = false
     }
     
     private func saveJoinCode(_ joinCode: String?) {
@@ -350,6 +352,7 @@ class GameViewModel: ObservableObject {
             isCreator = true
             self.joinCode = joinCode
             currentScreen = .lobby
+            waitingOnAction = false
         }
     }
     
@@ -410,6 +413,8 @@ class GameViewModel: ObservableObject {
     @objc private func onGameCreationError(_ notification: Notification) {
         HapticManager.playError()
         DispatchQueue.main.async {
+            self.waitingOnAction = false
+            
             withAnimation {
                 switch notification.userInfo?["error"] as? String ?? "" {
                 case "socket error":
@@ -472,6 +477,7 @@ class GameViewModel: ObservableObject {
             skippedPlayers.removeAll()
             tempTable = [:]
             table = [:]
+            waitingOnAction = false
         }
     }
     
@@ -567,6 +573,7 @@ class GameViewModel: ObservableObject {
         
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
+            self.waitingOnAction = false
             
             withAnimation {
                 switch joinError {
@@ -593,6 +600,7 @@ class GameViewModel: ObservableObject {
             isCreator = false
             self.joinCode = joinCode
             currentScreen = .lobby
+            waitingOnAction = false
         }
     }
     

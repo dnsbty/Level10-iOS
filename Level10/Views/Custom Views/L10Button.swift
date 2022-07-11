@@ -64,7 +64,7 @@ struct L10Button: View {
                 .foregroundColor(type.bgColor)
             
             Text(text)
-                .strikethrough(disabled)
+                .strikethrough(disabled && type != .primary)
                 .font(.system(size: 24.0, weight: .bold, design: .rounded))
                 .foregroundColor(type.textColor)
                 .shadow(color: type.textShadownColor, radius: 4, x: 0, y: 4)
