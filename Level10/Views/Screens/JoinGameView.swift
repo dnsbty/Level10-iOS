@@ -53,6 +53,7 @@ struct JoinGameView: View {
                 Button {
                     HapticManager.playLightImpact()
                     viewModel.currentScreen = .home
+                    viewModel.joinCode = nil
                 } label: {
                     L10Button(text: "Nevermind", type: .ghost).padding(.horizontal)
                 }
