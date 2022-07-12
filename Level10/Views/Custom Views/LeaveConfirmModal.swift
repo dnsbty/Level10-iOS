@@ -20,7 +20,9 @@ struct LeaveConfirmModal: View {
     }
     
     var body: some View {
-        ZStack(alignment: .top) {
+        ZStack(alignment: .bottom) {
+            Color.violet700.frame(height: 50)
+            
             VStack {
                 Text("Giving up? 😳")
                     .font(.system(size: 24.0, weight: .semibold, design: .rounded))

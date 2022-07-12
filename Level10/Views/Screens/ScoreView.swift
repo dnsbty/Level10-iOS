@@ -101,6 +101,9 @@ struct ScoreView: View {
                     Color(uiColor: .systemBackground).opacity(0.8)
                         .transition(.opacity)
                         .animation(.easeInOut, value: viewModel.showLeaveModal)
+                        .onTapGesture {
+                            withAnimation { viewModel.showLeaveModal = false }
+                        }
                     
                     LeaveConfirmModal(showModal: $viewModel.showLeaveModal)
                         .zIndex(2)

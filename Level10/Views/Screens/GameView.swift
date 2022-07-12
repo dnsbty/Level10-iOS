@@ -10,6 +10,8 @@ import SwiftUI
 struct GameView: View {
     @EnvironmentObject var viewModel: GameViewModel
     
+    private var smallSize = DeviceTypes.ScreenSize.maxLength < 800
+    
     private var gridItemLayout = [
         GridItem(.flexible()),
         GridItem(.flexible()),
@@ -25,10 +27,10 @@ struct GameView: View {
             // MARK: Player tables
             
             VStack {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: smallSize ? 4 : 16) {
                     ForEach(viewModel.players) { player in
                         if viewModel.remainingPlayers.contains(player.id) {
-                            HStack(spacing: 6) {
+                            HStack(spacing: smallSize ? 4 : 6) {
                                 StatusIndicator(status: viewModel.isConnected(playerId: player.id) ? .online : .offline)
                                     .frame(width: 10, height: 10, alignment: .center)
                                 
@@ -99,7 +101,7 @@ struct GameView: View {
                 if !viewModel.completedLevel {
                     self.ownTable()
                         .frame(maxHeight: 100)
-                        .padding()
+                        .padding(smallSize ? .horizontal : .all)
                 }
                 
                 // MARK: Player hand
@@ -137,7 +139,10 @@ struct GameView: View {
                     .frame(width: 296)
                 }
                 .padding(.horizontal)
+                .padding(.bottom)
             }
+            
+            // MARK: Error/warning banner
             
             ZStack(alignment: .top) {
                 if let joinError = viewModel.error {
@@ -149,6 +154,8 @@ struct GameView: View {
                     .animation(.easeInOut, value: viewModel.error)
                 }
             }
+            
+            // MARK: Modals
             
             ZStack(alignment: .bottom) {
                 if let winner = viewModel.roundWinner {
@@ -181,9 +188,7 @@ struct GameView: View {
                         .transition(.opacity)
                         .animation(.easeInOut, value: viewModel.showLeaveModal)
                         .onTapGesture {
-                            withAnimation {
-                                viewModel.showLeaveModal = false
-                            }
+                            withAnimation { viewModel.showLeaveModal = false }
                         }
                     
                     LeaveConfirmModal(showModal: $viewModel.showLeaveModal, midRound: true)
@@ -474,6 +479,7 @@ struct GameView_Previews: PreviewProvider {
         viewModel.newCard = Card(color: .blue, value: .three)
         viewModel.remainingPlayers = [
             "b95e86d7-82d5-4444-9322-2a7405f64fb8",
+            "cf34b6bf-b452-400a-a7f3-d5537d5a73b4",
             "1"
         ]
         viewModel.table = [

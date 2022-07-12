@@ -5,7 +5,7 @@
 //  Created by Dennis Beatty on 7/4/22.
 //
 
-import Foundation
+import UIKit
 
 struct RandomEmoji {
     private static let happyEmoji = ["🎉", "😄", "😎", "🤩", "🤑", "🔥"]
@@ -17,5 +17,14 @@ struct RandomEmoji {
     
     static func sad() -> String {
         return sadEmoji.randomElement()!
+    }
+}
+
+enum DeviceTypes {
+    enum ScreenSize {
+        static let width = UIScreen.main.bounds.size.width
+        static let height = UIScreen.main.bounds.size.height
+        static let maxLength = max(ScreenSize.width, ScreenSize.height)
+        static let minLength = min(ScreenSize.width, ScreenSize.height)
     }
 }

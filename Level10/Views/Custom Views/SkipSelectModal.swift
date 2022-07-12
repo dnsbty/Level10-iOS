@@ -14,11 +14,8 @@ struct SkipSelectModal: View {
     var completionHandler: ((String) -> ())
     
     var body: some View {
-        ZStack(alignment: .top) {
-            Rectangle()
-                .cornerRadius(40)
-                .foregroundColor(.violet700)
-                .frame(height: 180 + CGFloat(72 * players.count))
+        ZStack(alignment: .bottom) {
+            Color.violet700.frame(height: 50)
             
             VStack {
                 Text("Who would you like to skip?")
@@ -29,15 +26,17 @@ struct SkipSelectModal: View {
                 ForEach(players) { player in
                     let alreadySkipped = skippedPlayers.contains(player.id)
                     
-                    Button {
-                        withAnimation { displayModal = false }
-                        HapticManager.playMediumImpact()
-                        completionHandler(player.id)
-                    } label: {
-                        L10Button(text: player.name, type: .secondary, disabled: alreadySkipped)
-                            .padding(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
+                    if player.id != UserManager.shared.id {
+                        Button {
+                            withAnimation { displayModal = false }
+                            HapticManager.playMediumImpact()
+                            completionHandler(player.id)
+                        } label: {
+                            L10Button(text: player.name, type: .secondary, disabled: alreadySkipped)
+                                .padding(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
+                        }
+                        .disabled(alreadySkipped)
                     }
-                    .disabled(alreadySkipped)
                 }
                 
                 Button {
@@ -46,6 +45,9 @@ struct SkipSelectModal: View {
                     L10Button(text: "Discard something else", type: .ghost)
                 }
             }
+            .padding(.bottom)
+            .background(Color.violet700)
+            .cornerRadius(40)
         }
     }
 }
@@ -58,8 +60,13 @@ struct SkipSelectModal_Previews: PreviewProvider {
     ]
     
     static var previews: some View {
-        SkipSelectModal(displayModal: .constant(true), players: players, skippedPlayers: ["5678"]) { playerId in
-            print("Player \(playerId) was selected")
+        ZStack(alignment: .bottom) {
+            Color.white
+            
+            SkipSelectModal(displayModal: .constant(true), players: players, skippedPlayers: ["5678"]) { playerId in
+                print("Player \(playerId) was selected")
+            }
         }
+        .ignoresSafeArea()
     }
 }

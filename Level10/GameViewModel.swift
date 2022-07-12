@@ -122,7 +122,7 @@ class GameViewModel: ObservableObject {
         let level = levels[UserManager.shared.id!]!
         let levelGroup = level.groups[index]
         guard levelGroup.isValid(selectedCards) else {
-            withAnimation { error = "Those cards don't match the group silly 😋" }
+            withAnimation { error = "That's not a \(levelGroup.toString().lowercased()) 🤨" }
             return
         }
         

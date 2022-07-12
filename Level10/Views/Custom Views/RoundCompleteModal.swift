@@ -14,11 +14,8 @@ struct RoundCompleteModal: View {
     var winner: Player
     
     var body: some View {
-        ZStack(alignment: .top) {
-            Rectangle()
-                .cornerRadius(40)
-                .foregroundColor(.violet700)
-                .frame(height: 260)
+        ZStack(alignment: .bottom) {
+            Color.violet700.frame(height: 50)
             
             VStack(spacing: 32) {
                 Text(titleText())
@@ -37,6 +34,9 @@ struct RoundCompleteModal: View {
                     L10Button(text: buttonText(), type: .primary).padding(.horizontal)
                 }
             }
+            .padding(.bottom, 40)
+            .background(Color.violet700)
+            .cornerRadius(40)
         }
     }
     
@@ -72,6 +72,11 @@ struct RoundCompleteModal: View {
 
 struct RoundCompleteModal_Previews: PreviewProvider {
     static var previews: some View {
-        RoundCompleteModal(currentScreen: .constant(.game), completedLevel: true, gameOver: true, winner: Player(name: "Dennis", id: "1234"))
+        ZStack(alignment: .bottom) {
+            Color.white
+            
+            RoundCompleteModal(currentScreen: .constant(.game), completedLevel: true, gameOver: true, winner: Player(name: "Dennis", id: "1234"))
+        }
+        .ignoresSafeArea()
     }
 }
