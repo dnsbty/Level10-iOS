@@ -31,7 +31,6 @@ final class UserManager {
     
     private init() {
         if let token = getStoredToken() {
-            print("Got token", token)
             if let id = getId() {
                 self.token = token
                 self.id = id
@@ -118,7 +117,8 @@ final class UserManager {
     }
     
     private func getId() -> String? {
-        UserDefaults.standard.string(forKey: idKey)
+        var configuration = Configuration()
+        return UserDefaults.standard.string(forKey: configuration.environment.userIdKey)
     }
     
     private func getStoredToken() -> String? {
@@ -165,7 +165,8 @@ final class UserManager {
     
     private func setId(_ id: String) {
         self.id = id
-        UserDefaults.standard.set(id, forKey: idKey)
+        var configuration = Configuration()
+        UserDefaults.standard.set(id, forKey: configuration.environment.userIdKey)
     }
     
     private func setToken(_ token: String) -> Bool {

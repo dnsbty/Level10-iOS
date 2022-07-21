@@ -56,6 +56,7 @@ struct CreateGameView: View {
                     L10Button(text: "Creating Game...", type: .primary, disabled: true).padding()
                 } else {
                     Button {
+                        SoundManager.shared.playButtonTap()
                         createGame()
                     } label: {
                         L10Button(text: "Create Game", type: .primary).padding()
@@ -64,7 +65,10 @@ struct CreateGameView: View {
 
                 Button {
                     HapticManager.playLightImpact()
+                    SoundManager.shared.playButtonTap()
                     viewModel.currentScreen = .home
+                    viewModel.waitingOnAction = false
+                    viewModel.error = nil
                 } label: {
                     L10Button(text: "Nevermind", type: .ghost).padding(.horizontal)
                 }
@@ -85,6 +89,12 @@ struct CreateGameView: View {
 
     private func createGame() {
         guard !viewModel.waitingOnAction else { return }
+        guard !displayName.isEmpty else {
+            HapticManager.playError()
+            viewModel.error = "Please enter a name to be displayed to the other players. It doesn't even have to be your real one 😂"
+            return
+        }
+        
         viewModel.waitingOnAction = true
         UserManager.shared.rememberPreference(displayName, forKey: .displayName)
         UserManager.shared.rememberPreference(skipNextPlayer, forKey: .skipNextPlayer)

@@ -362,7 +362,10 @@ class GameViewModel: ObservableObject {
             currentPlayer = player
             hasDrawn = false
             
-            if isCurrentPlayer { HapticManager.playWarning() }
+            if isCurrentPlayer {
+                HapticManager.playWarning()
+                SoundManager.shared.playNotify()
+            }
         }
     }
     
@@ -439,8 +442,10 @@ class GameViewModel: ObservableObject {
             if let gameWinner = scores.first?.playerId,
                gameWinner == UserManager.shared.id {
                 HapticManager.playSuccess()
+                SoundManager.shared.playRoundOverWon()
             } else {
                 HapticManager.playWarning()
+                SoundManager.shared.playRoundOverLost()
             }
         }
     }
@@ -455,6 +460,7 @@ class GameViewModel: ObservableObject {
         else { return }
         
         HapticManager.playWarning()
+        SoundManager.shared.playNotify()
         let handCounts = Dictionary(uniqueKeysWithValues: players.map { ($0.id, 10) })
         let remainingPlayers = Set(players.map { $0.id })
         
@@ -636,8 +642,10 @@ class GameViewModel: ObservableObject {
         
         if completedLevel {
             HapticManager.playSuccess()
+            SoundManager.shared.playRoundOverWon()
         } else {
             HapticManager.playError()
+            SoundManager.shared.playRoundOverLost()
         }
         
         DispatchQueue.main.async { [self] in
@@ -658,6 +666,7 @@ class GameViewModel: ObservableObject {
         else { return }
         
         HapticManager.playWarning()
+        SoundManager.shared.playNotify()
         let discardTop = notification.userInfo?["discardTop"] as? Card
         
         DispatchQueue.main.async { [self] in
@@ -688,6 +697,7 @@ class GameViewModel: ObservableObject {
     
     @objc private func onSetTable(_ notification: Notification) {
         HapticManager.playSuccess()
+        SoundManager.shared.playLevelComplete()
         DispatchQueue.main.async {
             self.completedLevel = true
             self.tempTable = [:]

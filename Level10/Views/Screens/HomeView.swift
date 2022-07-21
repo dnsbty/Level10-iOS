@@ -29,6 +29,7 @@ struct HomeView: View {
 
                 Button {
                     HapticManager.playLightImpact()
+                    SoundManager.shared.playButtonTap()
                     currentScreen.wrappedValue = .create
                 } label: {
                     L10Button(text: "Create Game", type: .secondary).padding(.horizontal)
@@ -36,6 +37,7 @@ struct HomeView: View {
 
                 Button {
                     HapticManager.playLightImpact()
+                    SoundManager.shared.playButtonTap()
                     currentScreen.wrappedValue = .join
                 } label: {
                     L10Button(text: "Join Game", type: .primary).padding()

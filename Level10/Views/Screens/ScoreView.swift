@@ -66,6 +66,8 @@ struct ScoreView: View {
                 
                 if viewModel.gameOver {
                     Button {
+                        HapticManager.playLightImpact()
+                        SoundManager.shared.playButtonTap()
                         NetworkManager.shared.markReady()
                     } label: {
                         L10Button(text: "End Game", type: .primary).padding()
@@ -79,6 +81,7 @@ struct ScoreView: View {
                     } else {
                         Button {
                             HapticManager.playLightImpact()
+                            SoundManager.shared.playButtonTap()
                             NetworkManager.shared.markReady()
                         } label: {
                             L10Button(text: "Next Round", type: .primary).padding(.horizontal)
@@ -87,6 +90,7 @@ struct ScoreView: View {
                     
                     Button {
                         HapticManager.playLightImpact()
+                        SoundManager.shared.playButtonTap()
                         withAnimation {
                             viewModel.showLeaveModal = true
                         }

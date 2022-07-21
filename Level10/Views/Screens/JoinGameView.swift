@@ -44,6 +44,7 @@ struct JoinGameView: View {
                     L10Button(text: "Joining Game...", type: .primary, disabled: true).padding()
                 } else {
                     Button {
+                        SoundManager.shared.playButtonTap()
                         joinGame()
                     } label: {
                         L10Button(text: "Join Game", type: .primary).padding()
@@ -52,8 +53,11 @@ struct JoinGameView: View {
 
                 Button {
                     HapticManager.playLightImpact()
+                    SoundManager.shared.playButtonTap()
                     viewModel.currentScreen = .home
                     viewModel.joinCode = nil
+                    viewModel.waitingOnAction = false
+                    viewModel.error = nil
                 } label: {
                     L10Button(text: "Nevermind", type: .ghost).padding(.horizontal)
                 }
@@ -79,6 +83,17 @@ struct JoinGameView: View {
     
     private func joinGame() {
         guard !viewModel.waitingOnAction else { return }
+        guard !displayName.isEmpty else {
+            HapticManager.playError()
+            viewModel.error = "Please enter a name to be displayed to the other players. It doesn't even have to be your real one 😂"
+            return
+        }
+        guard !joinCode.isEmpty else {
+            HapticManager.playError()
+            viewModel.error = "How do you expect to join a game if you don't know which one you want to join? 🤨"
+            return
+        }
+        
         viewModel.waitingOnAction = true
         UserManager.shared.rememberPreference(displayName, forKey: .displayName)
         
@@ -86,6 +101,7 @@ struct JoinGameView: View {
             do {
                 try await NetworkManager.shared.joinGame(withCode: joinCode, displayName: displayName)
             } catch {
+                HapticManager.playError()
                 viewModel.waitingOnAction = false
                 withAnimation { viewModel.error = "The socket isn't connected 🤓" }
             }

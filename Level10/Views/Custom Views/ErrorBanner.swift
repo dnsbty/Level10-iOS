@@ -60,6 +60,8 @@ struct ErrorBanner: View {
                     .padding(.bottom)
 
                 Button {
+                    HapticManager.playLightImpact()
+                    SoundManager.shared.playButtonTap(volume: .extraLow)
                     onClose()
                 } label: {
                     ZStack {

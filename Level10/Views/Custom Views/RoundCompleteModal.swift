@@ -29,6 +29,7 @@ struct RoundCompleteModal: View {
 
                 Button {
                     HapticManager.playLightImpact()
+                    SoundManager.shared.playButtonTap()
                     currentScreen = .scoring
                 } label: {
                     L10Button(text: buttonText(), type: .primary).padding(.horizontal)

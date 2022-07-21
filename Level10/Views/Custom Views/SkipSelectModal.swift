@@ -30,6 +30,7 @@ struct SkipSelectModal: View {
                         Button {
                             withAnimation { displayModal = false }
                             HapticManager.playMediumImpact()
+                            SoundManager.shared.playButtonTap()
                             completionHandler(player.id)
                         } label: {
                             L10Button(text: player.name, type: .secondary, disabled: alreadySkipped)
@@ -40,6 +41,8 @@ struct SkipSelectModal: View {
                 }
                 
                 Button {
+                    HapticManager.playLightImpact()
+                    SoundManager.shared.playButtonTap()
                     withAnimation { displayModal = false }
                 } label: {
                     L10Button(text: "Discard something else", type: .ghost)

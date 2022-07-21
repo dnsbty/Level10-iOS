@@ -12,7 +12,7 @@ struct LobbyView: View {
     @EnvironmentObject var viewModel: GameViewModel
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             Color.violet700.ignoresSafeArea()
 
             VStack {
@@ -51,6 +51,14 @@ struct LobbyView: View {
                         L10Button(text: "Starting Game...", type: .primary, disabled: true).padding()
                     } else {
                         Button {
+                            HapticManager.playLightImpact()
+                            SoundManager.shared.playButtonTap()
+                            
+                            guard viewModel.players.count > 1 else {
+                                viewModel.error = "At least 2 players are needed to play Level 10. Time to make some friends! 😘"
+                                return
+                            }
+                            
                             NetworkManager.shared.startGame()
                         } label: {
                             L10Button(text: "Start Game", type: .primary).padding()
@@ -60,6 +68,8 @@ struct LobbyView: View {
 
                 HStack {
                     Button {
+                        HapticManager.playLightImpact()
+                        SoundManager.shared.playButtonTap()
                         NetworkManager.shared.leaveLobby()
                     } label: {
                         L10Button(text: "Leave", type: .ghost)
@@ -75,6 +85,17 @@ struct LobbyView: View {
                     }
                 }
                 .padding(.horizontal)
+            }
+            
+            if let startError = viewModel.error {
+                ErrorBanner(message: startError, displaySeconds: 5, type: .error) {
+                    withAnimation {
+                        viewModel.error = nil
+                    }
+                }
+                .zIndex(1)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .animation(.easeInOut, value: viewModel.error)
             }
         }
     }

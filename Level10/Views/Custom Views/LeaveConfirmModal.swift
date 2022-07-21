@@ -36,6 +36,7 @@ struct LeaveConfirmModal: View {
 
                 Button {
                     HapticManager.playLightImpact()
+                    SoundManager.shared.playButtonTap()
                     if midRound {
                         NetworkManager.shared.leaveLobby()
                     } else {
@@ -46,6 +47,9 @@ struct LeaveConfirmModal: View {
                 }
                 
                 Button {
+                    HapticManager.playLightImpact()
+                    SoundManager.shared.playButtonTap()
+                    
                     withAnimation {
                         showModal = false
                     }

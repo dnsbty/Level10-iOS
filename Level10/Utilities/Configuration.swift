@@ -31,18 +31,23 @@ enum DeploymentStage: String {
         case .Production: return "games.level10.Level10.userToken"
         }
     }
+    
+    var userIdKey: String {
+        switch self {
+        case .Development: return "user-id-development"
+        case .Production: return "user-id-production"
+        }
+    }
 }
 
 struct Configuration {
     lazy var environment: DeploymentStage = {
         if let configuration = Bundle.main.object(forInfoDictionaryKey: "Configuration") as? String {
             if let _ = configuration.range(of: "Development") {
-                print("Setting environment to DEVELOPMENT")
                 return DeploymentStage.Development
             }
         }
         
-        print("Setting environment to PRODUCTION")
         return DeploymentStage.Production
     }()
 }
