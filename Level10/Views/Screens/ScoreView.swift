@@ -102,9 +102,11 @@ struct ScoreView: View {
             
             ZStack(alignment: .bottom) {
                 if viewModel.showLeaveModal {
-                    Color(uiColor: .systemBackground).opacity(0.8)
+                    Color(uiColor: .systemBackground)
+                        .opacity(0.25)
                         .transition(.opacity)
                         .animation(.easeInOut, value: viewModel.showLeaveModal)
+                        .background(.ultraThinMaterial)
                         .onTapGesture {
                             withAnimation { viewModel.showLeaveModal = false }
                         }

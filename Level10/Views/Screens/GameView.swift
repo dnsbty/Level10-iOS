@@ -159,9 +159,11 @@ struct GameView: View {
             
             ZStack(alignment: .bottom) {
                 if let winner = viewModel.roundWinner {
-                    Color(uiColor: .systemBackground).opacity(0.8)
+                    Color(uiColor: .systemBackground)
+                        .opacity(0.25)
                         .transition(.opacity)
                         .animation(.easeInOut, value: viewModel.showLeaveModal)
+                        .background(.ultraThinMaterial)
                     
                     RoundCompleteModal(currentScreen: $viewModel.currentScreen,
                                        completedLevel: viewModel.completedLevel,
@@ -171,9 +173,11 @@ struct GameView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .animation(.easeInOut, value: viewModel.showLeaveModal)
                 } else if viewModel.selectPlayerToSkip {
-                    Color(uiColor: .systemBackground).opacity(0.8)
+                    Color(uiColor: .systemBackground)
+                        .opacity(0.25)
                         .transition(.opacity)
                         .animation(.easeInOut, value: viewModel.showLeaveModal)
+                        .background(.ultraThinMaterial)
                     
                     SkipSelectModal(displayModal: $viewModel.selectPlayerToSkip,
                                     players: viewModel.players,
@@ -184,9 +188,11 @@ struct GameView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .animation(.easeInOut, value: viewModel.showLeaveModal)
                 } else if viewModel.showLeaveModal {
-                    Color(uiColor: .systemBackground).opacity(0.8)
+                    Color(uiColor: .systemBackground)
+                        .opacity(0.25)
                         .transition(.opacity)
                         .animation(.easeInOut, value: viewModel.showLeaveModal)
+                        .background(.ultraThinMaterial)
                         .onTapGesture {
                             withAnimation { viewModel.showLeaveModal = false }
                         }
