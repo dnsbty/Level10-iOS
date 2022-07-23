@@ -442,10 +442,10 @@ class GameViewModel: ObservableObject {
             if let gameWinner = scores.first?.playerId,
                gameWinner == UserManager.shared.id {
                 HapticManager.playSuccess()
-                SoundManager.shared.playRoundOverWon()
+                SoundManager.shared.playSuccess()
             } else {
                 HapticManager.playWarning()
-                SoundManager.shared.playRoundOverLost()
+                SoundManager.shared.playFailure()
             }
         }
     }
@@ -642,10 +642,10 @@ class GameViewModel: ObservableObject {
         
         if completedLevel {
             HapticManager.playSuccess()
-            SoundManager.shared.playRoundOverWon()
+            SoundManager.shared.playSuccess()
         } else {
             HapticManager.playError()
-            SoundManager.shared.playRoundOverLost()
+            SoundManager.shared.playFailure()
         }
         
         DispatchQueue.main.async { [self] in
@@ -697,7 +697,7 @@ class GameViewModel: ObservableObject {
     
     @objc private func onSetTable(_ notification: Notification) {
         HapticManager.playSuccess()
-        SoundManager.shared.playLevelComplete()
+        SoundManager.shared.playSuccess()
         DispatchQueue.main.async {
             self.completedLevel = true
             self.tempTable = [:]

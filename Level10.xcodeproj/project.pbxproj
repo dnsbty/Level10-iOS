@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		D72E74652873D1A700CD61A3 /* SkipSelectModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = D72E74642873D1A700CD61A3 /* SkipSelectModal.swift */; };
-		D7416DCE288861FD004561B5 /* button-tap.wav in Resources */ = {isa = PBXBuildFile; fileRef = D7416DCD288861FD004561B5 /* button-tap.wav */; };
 		D7416DD0288870C1004561B5 /* notify.wav in Resources */ = {isa = PBXBuildFile; fileRef = D7416DCF288870C1004561B5 /* notify.wav */; };
 		D74492A42873D56A0003C5CF /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74492A32873D56A0003C5CF /* Constants.swift */; };
 		D74492A62879F7440003C5CF /* ErrorBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74492A52879F7440003C5CF /* ErrorBanner.swift */; };
@@ -38,16 +37,15 @@
 		D7C70E66283ABDC800C4A41B /* Game.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7C70E65283ABDC800C4A41B /* Game.swift */; };
 		D7C70E68283ABE4400C4A41B /* Notification+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7C70E67283ABE4400C4A41B /* Notification+Ext.swift */; };
 		D7C70E6A283AC21C00C4A41B /* GameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7C70E69283AC21C00C4A41B /* GameViewModel.swift */; };
+		D7C9B18A2889CA1400FDCD74 /* button-tap.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = D7C9B1862889CA1400FDCD74 /* button-tap.mp3 */; };
+		D7C9B18B2889CA1400FDCD74 /* success.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = D7C9B1872889CA1400FDCD74 /* success.mp3 */; };
+		D7C9B18C2889CA1400FDCD74 /* failure.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = D7C9B1882889CA1400FDCD74 /* failure.mp3 */; };
 		D7E30FAF2844675E007B190B /* Card.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7E30FAE2844675E007B190B /* Card.swift */; };
-		D7EBFAA328879433004D6482 /* level-complete.wav in Resources */ = {isa = PBXBuildFile; fileRef = D7EBFA9E28879433004D6482 /* level-complete.wav */; };
-		D7EBFAA428879433004D6482 /* round-over-lost.wav in Resources */ = {isa = PBXBuildFile; fileRef = D7EBFA9F28879433004D6482 /* round-over-lost.wav */; };
-		D7EBFAA628879433004D6482 /* round-over-won.wav in Resources */ = {isa = PBXBuildFile; fileRef = D7EBFAA128879433004D6482 /* round-over-won.wav */; };
 		D7EBFAA828879443004D6482 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7EBFAA728879443004D6482 /* SoundManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		D72E74642873D1A700CD61A3 /* SkipSelectModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkipSelectModal.swift; sourceTree = "<group>"; };
-		D7416DCD288861FD004561B5 /* button-tap.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "button-tap.wav"; sourceTree = "<group>"; };
 		D7416DCF288870C1004561B5 /* notify.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = notify.wav; sourceTree = "<group>"; };
 		D74492A32873D56A0003C5CF /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		D74492A52879F7440003C5CF /* ErrorBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorBanner.swift; sourceTree = "<group>"; };
@@ -78,10 +76,10 @@
 		D7C70E65283ABDC800C4A41B /* Game.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Game.swift; sourceTree = "<group>"; };
 		D7C70E67283ABE4400C4A41B /* Notification+Ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Notification+Ext.swift"; sourceTree = "<group>"; };
 		D7C70E69283AC21C00C4A41B /* GameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewModel.swift; sourceTree = "<group>"; };
+		D7C9B1862889CA1400FDCD74 /* button-tap.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "button-tap.mp3"; sourceTree = "<group>"; };
+		D7C9B1872889CA1400FDCD74 /* success.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = success.mp3; sourceTree = "<group>"; };
+		D7C9B1882889CA1400FDCD74 /* failure.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = failure.mp3; sourceTree = "<group>"; };
 		D7E30FAE2844675E007B190B /* Card.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Card.swift; sourceTree = "<group>"; };
-		D7EBFA9E28879433004D6482 /* level-complete.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "level-complete.wav"; sourceTree = "<group>"; };
-		D7EBFA9F28879433004D6482 /* round-over-lost.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "round-over-lost.wav"; sourceTree = "<group>"; };
-		D7EBFAA128879433004D6482 /* round-over-won.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "round-over-won.wav"; sourceTree = "<group>"; };
 		D7EBFAA728879443004D6482 /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -219,11 +217,10 @@
 		D7EBFA9C28879215004D6482 /* Sound Effects */ = {
 			isa = PBXGroup;
 			children = (
-				D7416DCD288861FD004561B5 /* button-tap.wav */,
-				D7EBFA9E28879433004D6482 /* level-complete.wav */,
+				D7C9B1862889CA1400FDCD74 /* button-tap.mp3 */,
+				D7C9B1882889CA1400FDCD74 /* failure.mp3 */,
 				D7416DCF288870C1004561B5 /* notify.wav */,
-				D7EBFA9F28879433004D6482 /* round-over-lost.wav */,
-				D7EBFAA128879433004D6482 /* round-over-won.wav */,
+				D7C9B1872889CA1400FDCD74 /* success.mp3 */,
 			);
 			path = "Sound Effects";
 			sourceTree = "<group>";
@@ -292,13 +289,12 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D7EBFAA428879433004D6482 /* round-over-lost.wav in Resources */,
-				D7416DCE288861FD004561B5 /* button-tap.wav in Resources */,
-				D7EBFAA328879433004D6482 /* level-complete.wav in Resources */,
+				D7C9B18A2889CA1400FDCD74 /* button-tap.mp3 in Resources */,
 				D7BF72E7283193370051E689 /* Preview Assets.xcassets in Resources */,
 				D7416DD0288870C1004561B5 /* notify.wav in Resources */,
+				D7C9B18B2889CA1400FDCD74 /* success.mp3 in Resources */,
+				D7C9B18C2889CA1400FDCD74 /* failure.mp3 in Resources */,
 				D7BF72E4283193370051E689 /* Assets.xcassets in Resources */,
-				D7EBFAA628879433004D6482 /* round-over-won.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -410,7 +406,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Level10/Level10.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_ASSET_PATHS = "\"Level10/Preview Content\"";
 				DEVELOPMENT_TEAM = QQWWMCLZJZ;
 				ENABLE_PREVIEWS = YES;
@@ -558,7 +554,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Level10/Level10.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_ASSET_PATHS = "\"Level10/Preview Content\"";
 				DEVELOPMENT_TEAM = QQWWMCLZJZ;
 				ENABLE_PREVIEWS = YES;
@@ -592,7 +588,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Level10/Level10.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_ASSET_PATHS = "\"Level10/Preview Content\"";
 				DEVELOPMENT_TEAM = QQWWMCLZJZ;
 				ENABLE_PREVIEWS = YES;

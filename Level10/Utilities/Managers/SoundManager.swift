@@ -9,17 +9,16 @@ import AVFoundation
 
 enum SoundEffect: String {
     case buttonTap = "button-tap"
-    case levelComplete = "level-complete"
+    case failure = "failure"
     case notify = "notify"
-    case roundOverLost = "round-over-lost"
-    case roundOverWon = "round-over-won"
+    case success = "success"
 }
 
 enum Volume: Float {
-    case extraLow = 0.005
-    case low = 0.01
-    case medium = 0.05
-    case high = 0.1
+    case extraLow = 0.01
+    case low = 0.05
+    case medium = 0.1
+    case high = 0.25
 }
 
 class SoundManager {
@@ -33,30 +32,27 @@ class SoundManager {
         playSound(.buttonTap, volume: volume.rawValue)
     }
     
-    func playLevelComplete(volume: Volume = .medium) {
-        playSound(.levelComplete, volume: volume.rawValue)
+    func playFailure(volume: Volume = .medium) {
+        playSound(.failure, volume: volume.rawValue)
     }
     
     func playNotify(volume: Volume = .medium) {
-        playSound(.notify, volume: volume.rawValue)
+        playSound(.notify, volume: volume.rawValue, type: .wav)
     }
     
-    func playRoundOverLost(volume: Volume = .medium) {
-        playSound(.roundOverLost, volume: volume.rawValue)
+    func playSuccess(volume: Volume = .medium) {
+        playSound(.success, volume: volume.rawValue)
     }
     
-    func playRoundOverWon(volume: Volume = .medium) {
-        playSound(.roundOverWon, volume: volume.rawValue)
-    }
-    
-    private func playSound(_ sound: SoundEffect, volume: Float = 1.0) {
-        guard let url = Bundle.main.url(forResource: sound.rawValue, withExtension: "wav") else { return }
+    private func playSound(_ sound: SoundEffect, volume: Float = 1.0, type: AVFileType = .mp3) {
+        let fileExt = type == .wav ? "wav" : "mp3"
+        guard let url = Bundle.main.url(forResource: sound.rawValue, withExtension: fileExt) else { return }
 
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+            try AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
 
-            player = try AVAudioPlayer(contentsOf: url, fileTypeHint: AVFileType.wav.rawValue)
+            player = try AVAudioPlayer(contentsOf: url, fileTypeHint: type.rawValue)
             guard let player = player else { return }
 
             player.volume = volume
