@@ -35,9 +35,10 @@ struct GameView: View {
                                     .frame(width: 10, height: 10, alignment: .center)
                                 
                                 Text(player.id == UserManager.shared.id ? "You" : player.name)
-                                    .font(.system(size: 18.0, weight: .semibold, design: .rounded))
+                                    .font(.system(size: 18.0, weight: player.id == viewModel.currentPlayer ? .bold : .semibold, design: .rounded))
                                     .foregroundColor(.white)
                                     .strikethrough(viewModel.skippedPlayers.contains(player.id))
+                                    .underline(player.id == viewModel.currentPlayer)
                                     .lineLimit(1)
                                     .frame(maxWidth: 100, alignment: .leading)
                                     .opacity(player.id == viewModel.currentPlayer ? 1.0 : 0.6)
