@@ -39,4 +39,5 @@ extension Notification.Name {
     static let roundDidStart = Notification.Name("roundDidStart")
     static let skippedPlayersDidUpdate = Notification.Name("skippedPlayersDidUpdate")
     static let tableDidUpdate = Notification.Name("tableDidUpdate")
+    static let versionUnsupported = Notification.Name("versionUnsupported")
 }

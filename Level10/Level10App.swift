@@ -31,19 +31,30 @@ struct Level10App: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                switch viewModel.currentScreen {
-                case .home:
-                    HomeView()
-                case .create:
-                    CreateGameView()
-                case .join:
-                    JoinGameView()
-                case .lobby:
-                    LobbyView()
-                case .game:
-                    GameView()
-                case .scoring:
-                    ScoreView()
+                ZStack {
+                    switch viewModel.currentScreen {
+                    case .home:
+                        HomeView()
+                    case .create:
+                        CreateGameView()
+                    case .join:
+                        JoinGameView()
+                    case .lobby:
+                        LobbyView()
+                    case .game:
+                        GameView()
+                    case .scoring:
+                        ScoreView()
+                    }
+                    
+                    if viewModel.unsupportedVersion {
+                        Color(uiColor: .systemBackground)
+                            .opacity(0.25)
+                            .background(.ultraThinMaterial)
+                            .ignoresSafeArea()
+                        
+                        UnsupportedVersionModal()
+                    }
                 }
             }
             .environment(\.currentScreen, $viewModel.currentScreen)

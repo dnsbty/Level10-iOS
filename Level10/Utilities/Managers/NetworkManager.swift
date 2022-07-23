@@ -50,7 +50,11 @@ final class NetworkManager {
         var configuration = Configuration()
         socket = Socket("\(configuration.environment.socketBaseUrl)/socket/websocket", paramsClosure: { [weak self] in
             guard let self = self, let authToken = self.authToken else { return [:] }
-            var params = ["token": authToken]
+            var params = [
+                "appVersion": Bundle.main.appVersion,
+                "buildNumber": Bundle.main.buildNumber,
+                "token": authToken
+            ]
             
             if let deviceToken = NotificationManager.shared.deviceToken {
                 params["device"] = deviceToken
@@ -119,7 +123,13 @@ final class NetworkManager {
             channel
                 .join()
                 .receive("ok") { message in print("Lobby joined", message.payload)}
-                .receive("error") { message in print("Failed to join lobby", message.payload)}
+                .receive("error") { message in
+                    guard let response = message.payload["response"] as? String else { return }
+                    if response == "update_required" {
+                        channel.leave()
+                        NotificationCenter.default.post(name: .versionUnsupported, object: nil)
+                    }
+                }
         } catch {
             print("Error connecting to socket: ", error)
         }

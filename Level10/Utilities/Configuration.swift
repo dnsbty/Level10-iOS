@@ -32,6 +32,13 @@ enum DeploymentStage: String {
         }
     }
     
+    var unsupportedVersionKey: String {
+        switch self {
+        case .Development: return "unsupported-version-development"
+        case .Production: return "unsupported-version-production"
+        }
+    }
+    
     var userIdKey: String {
         switch self {
         case .Development: return "user-id-development"

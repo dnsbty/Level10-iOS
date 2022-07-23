@@ -28,6 +28,7 @@ class GameViewModel: ObservableObject {
     @Published var showLeaveModal = false
     @Published var table: [String: [[Card]]] = [:]
     @Published var tempTable: [Int: [Card]] = [:]
+    @Published var unsupportedVersion = false
     @Published var waitingOnAction = false
     
     var completedLevel = false
@@ -96,7 +97,9 @@ class GameViewModel: ObservableObject {
         NotificationCenter.default.addObserver(self, selector: #selector(onRoundStart), name: .roundDidStart, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onSkippedPlayersUpdated), name: .skippedPlayersDidUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onTableUpdate), name: .tableDidUpdate, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onVersionUnsupported), name: .versionUnsupported, object: nil)
         
+        checkUnsupportedVersion()
         maybeConnectToExistingGame()
     }
     
@@ -231,8 +234,21 @@ class GameViewModel: ObservableObject {
     
     // MARK: Private functions
     
+    private func checkUnsupportedVersion() {
+        var configuration = Configuration()
+        let key = configuration.environment.unsupportedVersionKey
+        if let unsupportedVersionNumber = UserDefaults.standard.string(forKey: key) {
+            if unsupportedVersionNumber == Bundle.main.appVersion {
+                unsupportedVersion = true
+            } else {
+                UserDefaults.standard.removeObject(forKey: key)
+            }
+        }
+    }
+    
     private func maybeConnectToExistingGame() {
-        if let joinCode = UserDefaults.standard.string(forKey: joinCodeKey) {
+        if !unsupportedVersion,
+           let joinCode = UserDefaults.standard.string(forKey: joinCodeKey) {
             Task {
                 do {
                     try await NetworkManager.shared.reconnectToGame(withCode: joinCode)
@@ -713,5 +729,11 @@ class GameViewModel: ObservableObject {
     @objc private func onTableUpdate(_ notification: Notification) {
         guard let table = notification.userInfo?["table"] as? [String: [[Card]]] else { return }
         DispatchQueue.main.async { self.table = table }
+    }
+    
+    @objc private func onVersionUnsupported(_ notification: Notification) {
+        DispatchQueue.main.async { self.unsupportedVersion = true }
+        var configuration = Configuration()
+        UserDefaults.standard.set(Bundle.main.appVersion, forKey: configuration.environment.unsupportedVersionKey)
     }
 }
