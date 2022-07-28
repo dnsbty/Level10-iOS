@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import StoreKit
 
 struct ScoreView: View {
     @EnvironmentObject var viewModel: GameViewModel
@@ -126,6 +127,16 @@ struct ScoreView: View {
                         .animation(.easeInOut.delay(0.1), value: viewModel.showLeaveModal)
                 }.ignoresSafeArea()
             }
+        }
+        .onAppear {
+            guard viewModel.gameOver, let currentScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
+            
+            let lastVersionPromptedForReview = UserDefaults.standard.string(forKey: UserDefaultsKeys.lastVersionPromptedForReviewKey)
+            let currentVersion = Bundle.main.appVersion
+            guard currentVersion != lastVersionPromptedForReview else { return }
+            
+            SKStoreReviewController.requestReview(in: currentScene)
+            UserDefaults.standard.set(currentVersion, forKey: UserDefaultsKeys.lastVersionPromptedForReviewKey)
         }
     }
     

@@ -28,3 +28,7 @@ enum DeviceTypes {
         static let minLength = min(ScreenSize.width, ScreenSize.height)
     }
 }
+
+struct UserDefaultsKeys {
+    static let lastVersionPromptedForReviewKey = "lastVersionPromptedForReview"
+}
