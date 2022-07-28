@@ -42,6 +42,7 @@ struct ScoreView: View {
                                 .font(.system(size: 28.0, weight: .semibold, design: .rounded))
                                 .foregroundColor(.white)
                                 .strikethrough(!viewModel.remainingPlayers.contains(score.playerId))
+                                .lineLimit(1)
 
                             Spacer()
                             

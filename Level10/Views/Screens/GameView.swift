@@ -481,24 +481,38 @@ struct GameView_Previews: PreviewProvider {
         viewModel.currentPlayer = "b95e86d7-82d5-4444-9322-2a7405f64fb8"
         viewModel.players = [
             Player(name: "Dennis", id: "b95e86d7-82d5-4444-9322-2a7405f64fb8"),
-            Player(name: "Player 1", id: "1"),
-            Player(name: "Dennis", id: "cf34b6bf-b452-400a-a7f3-d5537d5a73b4"),
-            Player(name: "Dennis", id: "cf34b6bf-b452-400a-a7f3-d5537d5a73b4"),
-            Player(name: "Dennis", id: "cf34b6bf-b452-400a-a7f3-d5537d5a73b4"),
-            Player(name: "Brett", id: "cf34b6bf-b452-400a-a7f3-d5537d5a73b4")
+            Player(name: "Kira", id: "64d7f3b7-390e-4948-849e-a8745174db0e"),
+            Player(name: "Lily", id: "13c059c6-f4ad-4b05-87ca-2a61390f9042"),
+            Player(name: "Brett", id: "eb180f94-a899-4915-b2e8-57b8ea3e6103"),
+            Player(name: "Danny", id: "036a85e5-2b00-4cb7-8407-ca4b74ff4c7c"),
+            Player(name: "Megan", id: "cf34b6bf-b452-400a-a7f3-d5537d5a73b4")
         ]
         viewModel.levels = [
             "b95e86d7-82d5-4444-9322-2a7405f64fb8": Level(groups: [
                 LevelGroup(count: 3, type: .set), LevelGroup(count: 4, type: .run)
             ]),
-            "cf34b6bf-b452-400a-a7f3-d5537d5a73b4": Level(groups: [
+            "64d7f3b7-390e-4948-849e-a8745174db0e": Level(groups: [
+                LevelGroup(count: 3, type: .set), LevelGroup(count: 4, type: .run)
+            ]),
+            "13c059c6-f4ad-4b05-87ca-2a61390f9042": Level(groups: [
+                LevelGroup(count: 3, type: .set), LevelGroup(count: 4, type: .run)
+            ]),
+            "eb180f94-a899-4915-b2e8-57b8ea3e6103": Level(groups: [
                 LevelGroup(count: 3, type: .set), LevelGroup(count: 3, type: .set)
             ]),
-            "1": Level(groups: [
+            "036a85e5-2b00-4cb7-8407-ca4b74ff4c7c": Level(groups: [
+                LevelGroup(count: 3, type: .set), LevelGroup(count: 3, type: .set)
+            ]),
+            "cf34b6bf-b452-400a-a7f3-d5537d5a73b4": Level(groups: [
                 LevelGroup(count: 7, type: .run)
             ])
         ]
-        viewModel.connectedPlayers = ["b95e86d7-82d5-4444-9322-2a7405f64fb8", "1"]
+        viewModel.connectedPlayers = [
+            "036a85e5-2b00-4cb7-8407-ca4b74ff4c7c",
+            "13c059c6-f4ad-4b05-87ca-2a61390f9042",
+            "b95e86d7-82d5-4444-9322-2a7405f64fb8",
+            "eb180f94-a899-4915-b2e8-57b8ea3e6103"
+        ]
         viewModel.hand = [
             Card(color: .black, value: .wild),
             Card(color: .black, value: .wild),
@@ -512,23 +526,29 @@ struct GameView_Previews: PreviewProvider {
             Card(color: .black, value: .skip)
         ]
         viewModel.handCounts = [
+            "036a85e5-2b00-4cb7-8407-ca4b74ff4c7c": 10,
+            "13c059c6-f4ad-4b05-87ca-2a61390f9042": 10,
+            "64d7f3b7-390e-4948-849e-a8745174db0e": 10,
             "b95e86d7-82d5-4444-9322-2a7405f64fb8": 10,
             "cf34b6bf-b452-400a-a7f3-d5537d5a73b4": 2,
-            "1": 3
+            "eb180f94-a899-4915-b2e8-57b8ea3e6103": 10
         ]
         viewModel.newCard = Card(color: .blue, value: .three)
         viewModel.remainingPlayers = [
+            "036a85e5-2b00-4cb7-8407-ca4b74ff4c7c",
+            "13c059c6-f4ad-4b05-87ca-2a61390f9042",
+            "64d7f3b7-390e-4948-849e-a8745174db0e",
             "b95e86d7-82d5-4444-9322-2a7405f64fb8",
             "cf34b6bf-b452-400a-a7f3-d5537d5a73b4",
-            "1"
+            "eb180f94-a899-4915-b2e8-57b8ea3e6103"
         ]
         viewModel.scores = [
             Score(level: 11, playerId: "b95e86d7-82d5-4444-9322-2a7405f64fb8", points: 200),
-            Score(level: 10, playerId: "af225f65-7e29-4f08-b1e2-ac67abec6ab0", points: 45),
-            Score(level: 9, playerId: "20fc38f2-8657-47ca-8b64-72e3cc021d77", points: 120),
-            Score(level: 8, playerId: "679fbdde-eafa-46de-bc40-40165f68b218", points: 165),
-            Score(level: 8, playerId: "211a7eda-a033-46f7-9c9a-b98041380cd1", points: 240),
-            Score(level: 7, playerId: "cc7a02b6-4cce-4436-bf24-c7523eb7172f", points: 285)
+            Score(level: 10, playerId: "036a85e5-2b00-4cb7-8407-ca4b74ff4c7c", points: 45),
+            Score(level: 9, playerId: "13c059c6-f4ad-4b05-87ca-2a61390f9042", points: 120),
+            Score(level: 8, playerId: "64d7f3b7-390e-4948-849e-a8745174db0e", points: 165),
+            Score(level: 8, playerId: "cf34b6bf-b452-400a-a7f3-d5537d5a73b4", points: 240),
+            Score(level: 7, playerId: "eb180f94-a899-4915-b2e8-57b8ea3e6103", points: 285)
         ]
         viewModel.table = [
             "cf34b6bf-b452-400a-a7f3-d5537d5a73b4": [
