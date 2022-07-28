@@ -432,7 +432,11 @@ struct GameView: View {
     }
     
     private func onTapPlayerTable(playerId: String, groupIndex: Int) {
-        viewModel.addToPlayerTable(playerId: playerId, index: groupIndex)
+        if !viewModel.completedLevel && playerId == UserManager.shared.id {
+            onTapSelfTable(groupIndex: groupIndex)
+        } else {
+            viewModel.addToPlayerTable(playerId: playerId, index: groupIndex)
+        }
     }
     
     private func onTapSelfTable(groupIndex: Int) {
