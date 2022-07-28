@@ -9,24 +9,28 @@ import SwiftUI
 
 struct ScoreView: View {
     @EnvironmentObject var viewModel: GameViewModel
+    var inModal = false
     
     var body: some View {
         ZStack(alignment: .bottom) {
             Color.violet700.ignoresSafeArea()
             
             VStack {
-                Text(headerLabelText())
-                    .font(.system(size: 20.0, weight: .semibold, design: .rounded))
-                    .foregroundColor(.violet200)
-                    .padding(.top, 48)
+                if !inModal {
+                    Text(headerLabelText())
+                        .font(.system(size: 20.0, weight: .semibold, design: .rounded))
+                        .foregroundColor(.violet200)
+                        .padding(.top, 48)
+                }
 
                 Text(headerText())
                     .font(.system(size: 40.0, weight: .heavy, design: .rounded))
                     .foregroundColor(.white)
+                    .padding(.top, inModal ? 48 : 0)
                 
                 VStack {
-                    ForEach(viewModel.scores.indices, id: \.self) { scoreIndex in
-                        let score = viewModel.scores[scoreIndex]
+                    ForEach(viewModel.scoresOrDefault.indices, id: \.self) { scoreIndex in
+                        let score = viewModel.scoresOrDefault[scoreIndex]
                         let player = viewModel.player(id: score.playerId)
                         
                         HStack(spacing: 8) {
@@ -50,12 +54,14 @@ struct ScoreView: View {
                                 .foregroundColor(.white)
                                 .frame(width: 56)
                             
-                            if viewModel.isReady(playerId: score.playerId) {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.white)
-                                    .frame(width: 12, height: 12, alignment: .leading)
-                            } else {
-                                StatusIndicator(status: viewModel.isConnected(playerId: score.playerId) ? .online : .offline)
+                            if !inModal {
+                                if viewModel.isReady(playerId: score.playerId) {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.white)
+                                        .frame(width: 12, height: 12, alignment: .leading)
+                                } else {
+                                    StatusIndicator(status: viewModel.isConnected(playerId: score.playerId) ? .online : .offline)
+                                }
                             }
                         }
                     }
@@ -64,44 +70,46 @@ struct ScoreView: View {
                 
                 Spacer()
                 
-                if viewModel.gameOver {
-                    Button {
-                        HapticManager.playLightImpact()
-                        SoundManager.shared.playButtonTap()
-                        NetworkManager.shared.markReady()
-                    } label: {
-                        L10Button(text: "End Game", type: .primary).padding()
-                    }
-                } else {
-                    if viewModel.isReady(playerId: UserManager.shared.id ?? "b95e86d7-82d5-4444-9322-2a7405f64fb8") {
-                        Text("Waiting for others...")
-                            .font(.system(size: 24.0, weight: .semibold, design: .rounded))
-                            .foregroundColor(.violet200)
-                            .padding(.bottom)
-                    } else {
+                if !inModal {
+                    if viewModel.gameOver {
                         Button {
                             HapticManager.playLightImpact()
                             SoundManager.shared.playButtonTap()
                             NetworkManager.shared.markReady()
                         } label: {
-                            L10Button(text: "Next Round", type: .primary).padding(.horizontal)
+                            L10Button(text: "End Game", type: .primary).padding()
                         }
+                    } else {
+                        if viewModel.isReady(playerId: UserManager.shared.id ?? "b95e86d7-82d5-4444-9322-2a7405f64fb8") {
+                            Text("Waiting for others...")
+                                .font(.system(size: 24.0, weight: .semibold, design: .rounded))
+                                .foregroundColor(.violet200)
+                                .padding(.bottom)
+                        } else {
+                            Button {
+                                HapticManager.playLightImpact()
+                                SoundManager.shared.playButtonTap()
+                                NetworkManager.shared.markReady()
+                            } label: {
+                                L10Button(text: "Next Round", type: .primary).padding(.horizontal)
+                            }
+                        }
+                        
+                        Button {
+                            HapticManager.playLightImpact()
+                            SoundManager.shared.playButtonTap()
+                            withAnimation {
+                                viewModel.showLeaveModal = true
+                            }
+                        } label: {
+                            L10Button(text: "Leave Game", type: .ghost)
+                        }.padding(.bottom)
                     }
-                    
-                    Button {
-                        HapticManager.playLightImpact()
-                        SoundManager.shared.playButtonTap()
-                        withAnimation {
-                            viewModel.showLeaveModal = true
-                        }
-                    } label: {
-                        L10Button(text: "Leave Game", type: .ghost)
-                    }.padding(.bottom)
                 }
             }
             
-            ZStack(alignment: .bottom) {
-                if viewModel.showLeaveModal {
+            if !inModal && viewModel.showLeaveModal {
+                ZStack(alignment: .bottom) {
                     Color(uiColor: .systemBackground)
                         .opacity(0.25)
                         .transition(.opacity)
@@ -115,8 +123,8 @@ struct ScoreView: View {
                         .zIndex(2)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                         .animation(.easeInOut.delay(0.1), value: viewModel.showLeaveModal)
-                }
-            }.ignoresSafeArea()
+                }.ignoresSafeArea()
+            }
         }
     }
     
@@ -126,6 +134,8 @@ struct ScoreView: View {
     }
     
     private func headerText() -> String {
+        if inModal { return "Scores" }
+        
         if viewModel.gameOver {
             let score = viewModel.scores.first!
             let player = viewModel.player(id: score.playerId)!

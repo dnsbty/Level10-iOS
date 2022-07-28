@@ -55,6 +55,11 @@ class GameViewModel: ObservableObject {
         return "\(configuration.environment.apiBaseUrl)/join/\(joinCode)"
     }
     
+    var scoresOrDefault: [Score] {
+        guard scores.isEmpty else { return scores }
+        return players.map { Score(level: 1, playerId: $0.id, points: 0) }
+    }
+    
     var selectedCards: [Card] {
         var cards = [Card]()
         for index in selectedIndices { cards.append(hand[index]) }

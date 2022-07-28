@@ -9,6 +9,7 @@ import SwiftUI
 
 struct GameView: View {
     @EnvironmentObject var viewModel: GameViewModel
+    @State var displayScores = false
     
     private var smallSize = DeviceTypes.ScreenSize.maxLength < 800
     
@@ -199,17 +200,45 @@ struct GameView: View {
                         }
                     
                     LeaveConfirmModal(showModal: $viewModel.showLeaveModal, midRound: true)
-                        .zIndex(2)
+                        .zIndex(1)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                         .animation(.easeInOut.delay(0.1), value: viewModel.showLeaveModal)
                 }
             }.ignoresSafeArea()
+            
+            // MARK: Score Modal
+            
+            ZStack(alignment: .trailing) {
+                if displayScores {
+                    Color(uiColor: .systemBackground)
+                        .opacity(0.25)
+                        .transition(.opacity)
+                        .animation(.easeInOut, value: displayScores)
+                        .background(.ultraThinMaterial)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation { displayScores = false }
+                        }
+                    
+                    ScoreView(inModal: true)
+                        .padding(.leading, 24)
+                        .zIndex(1)
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                        .animation(.easeInOut.delay(0.1), value: displayScores)
+                }
+            }
         }
         .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local).onEnded({ value in
             if value.translation.width > 50 {
                 withAnimation {
-                    viewModel.showLeaveModal = true
+                    if displayScores {
+                        displayScores = false
+                    } else {
+                        viewModel.showLeaveModal = true
+                    }
                 }
+            } else if value.translation.width < -50 {
+                withAnimation { displayScores = true }
             }
         }))
     }
@@ -492,6 +521,14 @@ struct GameView_Previews: PreviewProvider {
             "b95e86d7-82d5-4444-9322-2a7405f64fb8",
             "cf34b6bf-b452-400a-a7f3-d5537d5a73b4",
             "1"
+        ]
+        viewModel.scores = [
+            Score(level: 11, playerId: "b95e86d7-82d5-4444-9322-2a7405f64fb8", points: 200),
+            Score(level: 10, playerId: "af225f65-7e29-4f08-b1e2-ac67abec6ab0", points: 45),
+            Score(level: 9, playerId: "20fc38f2-8657-47ca-8b64-72e3cc021d77", points: 120),
+            Score(level: 8, playerId: "679fbdde-eafa-46de-bc40-40165f68b218", points: 165),
+            Score(level: 8, playerId: "211a7eda-a033-46f7-9c9a-b98041380cd1", points: 240),
+            Score(level: 7, playerId: "cc7a02b6-4cce-4436-bf24-c7523eb7172f", points: 285)
         ]
         viewModel.table = [
             "cf34b6bf-b452-400a-a7f3-d5537d5a73b4": [
