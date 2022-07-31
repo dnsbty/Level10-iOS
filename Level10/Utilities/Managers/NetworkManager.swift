@@ -14,13 +14,6 @@ struct User: Codable {
     let token: String
 }
 
-enum GameConnectError: Error {
-    case alreadyStarted
-    case full
-    case notFound
-    case unknownError(String)
-}
-
 enum NetworkError: Error {
     case badRequest
     case badServerResponse
@@ -36,8 +29,9 @@ enum NetworkError: Error {
 
 final class NetworkManager {
     static let shared = NetworkManager()
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "NetworkManager")
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: String(describing: NetworkManager.self))
     private let createdGameConnectMaxAttempts = 6
+    private let decoder: JSONDecoder
     
     private var authToken: String?
     private var lobbyChannel: Channel?
@@ -47,23 +41,25 @@ final class NetworkManager {
     private var sentDeviceToken = false
     
     private init() {
+        decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        
         var configuration = Configuration()
         socket = Socket("\(configuration.environment.socketBaseUrl)/socket/websocket", paramsClosure: { [weak self] in
             guard let self = self, let authToken = self.authToken else { return [:] }
-            var params = [
-                "appVersion": Bundle.main.appVersion,
-                "buildNumber": Bundle.main.buildNumber,
-                "token": authToken
-            ]
             
-            if let deviceToken = NotificationManager.shared.deviceToken {
-                params["device"] = deviceToken
+            let params = SocketParams(appVersion: Bundle.main.appVersion,
+                                      buildNumber: Bundle.main.buildNumber,
+                                      device: NotificationManager.shared.deviceToken,
+                                      token: authToken)
+            
+            if params.device != nil {
                 self.sentDeviceToken = true
             } else {
                 print("No device token found")
             }
             
-            return params
+            return params.toDict()
         })
         
         guard let socket = socket else { return }
@@ -99,16 +95,16 @@ final class NetworkManager {
         guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
         
-        let cardDicts = cards.map { $0.forJson() }
+        let params = AddToTableParams(cards: cards, playerId: tablePlayerId, groupPosition: groupPosition)
         
-        channel
-            .push("add_to_table", payload: ["cards": cardDicts, "player_id": tablePlayerId, "position": groupPosition])
-            .receive("ok") { _ in
+        channel.push(.addToTable, payload: params.toDict()) { (result: Result<NoReply, AddToTableError>) in
+            switch result {
+            case .success(_):
                 NotificationCenter.default.post(name: .didAddToTable, object: nil)
+            case .failure(let error):
+                NotificationCenter.default.post(name: .didReceiveAddToTableError, object: nil, userInfo: ["error": error])
             }
-            .receive("error") { response in
-                NotificationCenter.default.post(name: .didReceiveAddToTableError, object: nil, userInfo: ["error": response.payload["response"] ?? ""])
-            }
+        }
     }
     
     /**
@@ -120,16 +116,17 @@ final class NetworkManager {
             authToken = try await UserManager.shared.getToken()
             socket.connect()
             
-            channel
-                .join()
-                .receive("ok") { message in print("Lobby joined", message.payload)}
-                .receive("error") { message in
-                    guard let response = message.payload["response"] as? String else { return }
-                    if response == "update_required" {
+            channel.join() { (result: Result<NoReply, ConnectError>) in
+                switch result {
+                case .success(_):
+                    print("Lobby joined")
+                case .failure(let error):
+                    if error == .updateRequired {
                         channel.leave()
                         NotificationCenter.default.post(name: .versionUnsupported, object: nil)
                     }
                 }
+            }
         } catch {
             print("Error connecting to socket: ", error)
         }
@@ -148,17 +145,16 @@ final class NetworkManager {
         if !socket.isConnected { await connectSocket() }
         guard let channel = lobbyChannel else { throw NetworkError.channelNotJoined }
         
-        let params: [String: Any] = ["displayName": name, "skipNextPlayer": settings.skipNextPlayer]
+        let params = CreateGameParams(displayName: name, settings: settings)
         
-        channel
-            .push("create_game", payload: params)
-            .receive("ok") { response in
-                guard let joinCode = response.payload["joinCode"] as? String else { return }
-                self.connectToCreatedGame(joinCode: joinCode, remainingAttempts: self.createdGameConnectMaxAttempts)
+        channel.push(.createGame, payload: params.toDict(), with: decoder) { (result: Result<JoinCodePayload, GameCreationError>) in
+            switch result {
+            case .success(let payload):
+                self.connectToCreatedGame(joinCode: payload.joinCode, remainingAttempts: self.createdGameConnectMaxAttempts)
+            case .failure(let error):
+                NotificationCenter.default.post(name: .didReceiveGameCreationError, object: nil, userInfo: ["error": error])
             }
-            .receive("error") { response in
-                NotificationCenter.default.post(name: .didReceiveGameCreationError, object: nil, userInfo: ["error": response.payload["response"] ?? ""])
-            }
+        }
     }
     
     /**
@@ -210,22 +206,17 @@ final class NetworkManager {
     func discardCard(card: Card, playerToSkip: String?) async throws {
         guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
-        var payload: [String: Any] = ["card": card.forJson()]
-        if let playerToSkip = playerToSkip { payload["player_id"] = playerToSkip }
         
-        channel
-            .push("discard", payload: payload)
-            .receive("ok") { [weak self] response in
-                guard let self = self,
-                      let handDicts = response.payload["hand"] as? [[String: String]]
-                else { return }
-                
-                let hand = handDicts.compactMap(self.cardFromDict)
-                NotificationCenter.default.post(name: .handDidUpdate, object: nil, userInfo: ["hand": hand])
+        let params = DiscardParams(card: card, playerToSkip: playerToSkip)
+        
+        channel.push(.discard, payload: params.toDict(), with: decoder) { (result: Result<HandUpdatedPayload, GameCreationError>) in
+            switch result {
+            case .success(let payload):
+                NotificationCenter.default.post(name: .handDidUpdate, object: nil, userInfo: ["hand": payload.hand])
+            case .failure(let error):
+                NotificationCenter.default.post(name: .didReceiveGameCreationError, object: nil, userInfo: ["error": error])
             }
-            .receive("error") { response in
-                NotificationCenter.default.post(name: .didReceiveDiscardError, object: nil, userInfo: ["error": response.payload["response"] ?? ""])
-            }
+        }
     }
     
     /**
@@ -236,23 +227,21 @@ final class NetworkManager {
     func drawCard(source: DrawSource) async throws {
         guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
-        let params: [String: Any] = ["source": source.rawValue]
+        let params = DrawCardParams(source: source)
         
-        channel
-            .push("draw_card", payload: params)
-            .receive("ok") { [weak self] response in
-                guard let self = self,
-                      let newCardDict = response.payload["card"] as? [String: String],
-                      let newCard = self.cardFromDict(newCardDict)
-                else { return }
-                
-                NotificationCenter.default.post(name: .didDrawCard, object: nil, userInfo: ["newCard": newCard])
+        channel.push(.drawCard, payload: params.toDict(), with: decoder) { (result: Result<CardPayload, CardDrawError>) in
+            switch result {
+            case .success(let payload):
+                NotificationCenter.default.post(name: .didDrawCard, object: nil, userInfo: ["newCard": payload.card])
+            case .failure(let error):
+                NotificationCenter.default.post(name: .didReceiveCardDrawError, object: nil, userInfo: ["error": error])
             }
-            .receive("error") { response in
-                NotificationCenter.default.post(name: .didReceiveCardDrawError, object: nil, userInfo: ["error": response.payload["response"] ?? ""])
-            }
+        }
     }
     
+    /**
+     Leaves the game once it is complete and clears all the state.
+     */
     func endGame() {
         gameChannel?.leave()
         gameChannel = nil
@@ -270,7 +259,8 @@ final class NetworkManager {
     func joinGame(withCode joinCode: String, displayName name: String) async throws {
         guard let socket = socket else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
-        self.connectToGame(joinCode: joinCode, params: ["displayName": name]) { error in
+        let params = JoinGameParams(displayName: name)
+        self.connectToGame(joinCode: joinCode, params: params) { error in
             if let error = error {
                 NotificationCenter.default.post(name: .gameJoinError, object: nil, userInfo: ["error": error])
             } else {
@@ -283,7 +273,7 @@ final class NetworkManager {
      Leaves the game after it has started.
      */
     func leaveGame() {
-        gameChannel?.push("leave_game", payload: [:])
+        gameChannel?.push(.leaveGame, payload: [:])
         gameChannel?.leave()
         gameChannel = nil
         sentDeviceToken = false
@@ -294,7 +284,7 @@ final class NetworkManager {
      Leaves the game while still in the lobby.
      */
     func leaveLobby() {
-        gameChannel?.push("leave_lobby", payload: [:])
+        gameChannel?.push(.leaveLobby, payload: [:])
         gameChannel?.leave()
         gameChannel = nil
         sentDeviceToken = false
@@ -305,7 +295,7 @@ final class NetworkManager {
      Marks the player as ready to start the next round.
      */
     func markReady() {
-        gameChannel?.push("mark_ready", payload: [:])
+        gameChannel?.push(.markReady, payload: [:])
     }
     
     /**
@@ -318,27 +308,33 @@ final class NetworkManager {
     func reconnectToGame(withCode joinCode: String) async throws {
         guard let socket = socket else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
-        self.connectToGame(joinCode: joinCode, completionHandler: nil)
+        self.connectToGame(joinCode: joinCode) { error in
+            guard error == nil else {
+                UserDefaults.standard.set(nil, forKey: UserDefaultsKeys.joinCodeKey)
+                return
+            }
+            print("Reconnected to game", joinCode)
+        }
     }
     
     /**
      Sends the device's token to the server to allow for push notifications to be received.
      */
     func sendDeviceTokenToServer() {
-        if let gameChannel = gameChannel, let deviceToken = NotificationManager.shared.deviceToken {
-            gameChannel
-                .push("put_device_token", payload: ["token": deviceToken])
-                .receive("ok") { [weak self] _ in
-                    self?.sentDeviceToken = true
-            }
-        }
+        guard let channel = gameChannel,
+              let deviceToken = NotificationManager.shared.deviceToken
+        else { return }
+        
+        let params = TokenParams(token: deviceToken)
+        channel.push(.putDeviceToken, payload: params.toDict())
+        sentDeviceToken = true
     }
     
     /**
      Starts a game. Expects the player sending the message to be the player who created the game.
      */
     func startGame() {
-        gameChannel?.push("start_game", payload: [:])
+        gameChannel?.push(.startGame, payload: [:])
     }
     
     /**
@@ -350,18 +346,16 @@ final class NetworkManager {
         guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketNotConnected }
         if !socket.isConnected { await connectSocket() }
         
-        let tableGroups = table.map { group in
-            group.compactMap { $0.forJson() }
-        }
+        let params = SetTableParams(table: table)
         
         channel
-            .push("table_cards", payload: ["table": tableGroups])
-            .receive("ok") { _ in
-                NotificationCenter.default.post(name: .didSetTable, object: nil)
-            }
-            .receive("error") { response in
-                print("Table set error: ", response.payload["response"] ?? "")
-                NotificationCenter.default.post(name: .didReceiveTableSetError, object: nil, userInfo: ["error": response.payload["response"] ?? ""])
+            .push(.tableCards, payload: params.toDict(), with: decoder) { (result: Result<NoReply, TableSetError>) in
+                switch result {
+                case .success(_):
+                    NotificationCenter.default.post(name: .didSetTable, object: nil)
+                case .failure(let error):
+                    NotificationCenter.default.post(name: .didReceiveTableSetError, object: nil, userInfo: ["error": error])
+                }
             }
     }
     
@@ -376,7 +370,7 @@ final class NetworkManager {
     
     private func connectToCreatedGame(joinCode: String, remainingAttempts: Int) {
         guard socket != nil else {
-            NotificationCenter.default.post(name: .didReceiveGameCreationError, object: nil, userInfo: ["error": "socket error"])
+            NotificationCenter.default.post(name: .didReceiveGameCreationError, object: nil, userInfo: ["error": GameCreationError.networkError])
             return
         }
         
@@ -400,12 +394,12 @@ final class NetworkManager {
     }
     
     private func connectToGame(joinCode: String, completionHandler: ((GameConnectError?) -> Void)?) {
-        connectToGame(joinCode: joinCode, params: [:], completionHandler: completionHandler)
+        connectToGame(joinCode: joinCode, params: JoinGameParams(displayName: nil), completionHandler: completionHandler)
     }
     
-    private func connectToGame(joinCode: String, params: [String: String], completionHandler: ((GameConnectError?) -> Void)?) {
+    private func connectToGame(joinCode: String, params: JoinGameParams, completionHandler: ((GameConnectError?) -> Void)?) {
         guard let socket = socket else { return }
-        self.gameChannel = socket.channel("game:\(joinCode)", params: params)
+        self.gameChannel = socket.channel("game:\(joinCode)", params: params.toDict())
         guard let gameChannel = gameChannel else { return }
         
         presence = Presence(channel: gameChannel)
@@ -414,281 +408,81 @@ final class NetworkManager {
             NotificationCenter.default.post(name: .didReceivePresenceUpdate, object: nil, userInfo: ["connectedUsers": connectedUsers])
         }
         
-        gameChannel.on("game_finished") { [weak self] message in
-            guard let self = self,
-                  let scoreDicts = message.payload["scores"] as? [[String: Any]],
-                  let winnerDict = message.payload["round_winner"] as? [String: String],
-                  let winner = self.playerFromDict(winnerDict)
-            else { return }
-            
-            let scores = scoreDicts.compactMap(self.scoreFromDict)
-            NotificationCenter.default.post(name: .gameDidFinish, object: nil, userInfo: ["scores": scores, "roundWinner": winner])
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        
+        gameChannel.on(.gameFinished, with: decoder) { (payload: GameFinishedPayload) in
+            NotificationCenter.default.post(name: .gameDidFinish, object: nil, userInfo: ["payload": payload])
         }
         
-        gameChannel.on("game_started") { [weak self] message in
-            guard let self = self,
-                  let currentPlayer = message.payload["current_player"] as? String,
-                  let discardTopDict = message.payload["discard_top"] as? [String: String],
-                  let discardTop = self.cardFromDict(discardTopDict),
-                  let handDicts = message.payload["hand"] as? [[String: String]],
-                  let levelDicts = message.payload["levels"] as? [String: [[String: Any]]],
-                  let playerDicts = message.payload["players"] as? [[String: String]],
-                  let skipNextPlayer = message.payload["skip_next_player"] as? Bool
-            else { return }
-            
-            let hand = handDicts.compactMap(self.cardFromDict)
-            let levels = self.levelsFromDict(levelDicts)
-            
-            let players: [Player] = playerDicts.compactMap { dict in
-                guard let name = dict["name"], let id = dict["id"] else { return nil }
-                return Player(name: name, id: id)
-            }
-            
-            let info: [AnyHashable: Any] = [
-                "currentPlayer": currentPlayer,
-                "discardTop": discardTop,
-                "hand": hand,
-                "levels": levels,
-                "players": players,
-                "settings": GameSettings(skipNextPlayer: skipNextPlayer)
-            ]
-            
-            NotificationCenter.default.post(name: .gameDidStart, object: nil, userInfo: info)
+        gameChannel.on(.gameStarted, with: decoder) { (game: Game) in
+            NotificationCenter.default.post(name: .gameDidStart, object: nil, userInfo: ["game": game])
         }
         
-        gameChannel.on("hand_counts_updated") { message in
-            guard let handCounts = message.payload["hand_counts"] as? [String: Int] else { return }
-            NotificationCenter.default.post(name: .didReceiveUpdatedHandCounts, object: nil, userInfo: ["handCounts": handCounts])
+        gameChannel.on(.handCountsUpdated, with: decoder) { (payload: HandCountUpdatePayload) in
+            NotificationCenter.default.post(name: .didReceiveUpdatedHandCounts, object: nil, userInfo: ["handCounts": payload.handCounts])
         }
         
-        gameChannel.on("latest_state") { [weak self] message in
-            guard let self = self,
-                  let currentPlayer = message.payload["current_player"] as? String,
-                  let gameOver = message.payload["game_over"] as? Bool,
-                  let handCounts = message.payload["hand_counts"] as? [String: Int],
-                  let handDicts = message.payload["hand"] as? [[String: String]],
-                  let hasDrawn = message.payload["has_drawn"] as? Bool,
-                  let levelDicts = message.payload["levels"] as? [String: [[String: Any]]],
-                  let playerDicts = message.payload["players"] as? [[String: String]],
-                  let remainingPlayers = message.payload["remaining_players"] as? [String],
-                  let roundNumber = message.payload["round_number"] as? Int,
-                  let skipNextPlayer = message.payload["skip_next_player"] as? Bool,
-                  let tableDicts = message.payload["table"] as? [String: [[[String: String]]]]
-            else { return }
-            
-            let discardTopDict = message.payload["discard_top"] as? [String: String]
-            let playersReady = message.payload["players_ready"] as? [String] ?? []
-            let roundWinnerDict = message.payload["round_winner"] as? [String: String]
-            let scoreDicts = message.payload["scores"] as? [[String: Any]]
-            let skippedPlayers = message.payload["skipped_players"] as? [String] ?? []
-            
-            // Convert the various dictionaries to card, level, player, and score structs
-            let hand = handDicts.compactMap(self.cardFromDict)
-            let levels = self.levelsFromDict(levelDicts)
-            let scores = scoreDicts?.compactMap(self.scoreFromDict) ?? []
-            
-            let players: [Player] = playerDicts.compactMap(self.playerFromDict)
-            
-            var table: [String: [[Card]]] = [:]
-            for playerId in tableDicts.keys {
-                var playerTable: [[Card]] = []
+        gameChannel.on(.latestState, with: decoder) { (game: Game) in
+            NotificationCenter.default.post(name: .didReceiveGameState, object: nil, userInfo: ["game": game])
+        }
+        
+        gameChannel.on(.newDiscardTop, with: decoder) { (payload: NewDiscardTopPayload) in
+            var info: [String: Any] = [:]
+            if let discardTop = payload.discardTop { info["discardTop"] = discardTop }
+            NotificationCenter.default.post(name: .discardTopDidChange, object: nil, userInfo: info)
+        }
+        
+        gameChannel.on(.newTurn, with: decoder) { (payload: PlayerIdPayload) in
+            NotificationCenter.default.post(name: .currentPlayerDidUpdate, object: nil, userInfo: ["player": payload.player])
+        }
+        
+        gameChannel.on(.playerRemoved, with: decoder) { (payload: PlayerIdPayload) in
+            NotificationCenter.default.post(name: .didRemovePlayer, object: nil, userInfo: ["player": payload.player])
+        }
+        
+        gameChannel.on(.playersReady, with: decoder) { (payload: PlayerIdListPayload) in
+            NotificationCenter.default.post(name: .didReceivePlayersReadyUpdate, object: nil, userInfo: ["playersReady": Set(payload.players)])
+        }
+        
+        gameChannel.on(.playersUpdated, with: decoder) { (payload: PlayerListPayload) in
+            NotificationCenter.default.post(name: .didReceiveUpdatedPlayerList, object: nil, userInfo: ["players": payload.players])
+        }
+        
+        gameChannel.on(.roundFinished, with: decoder) { (payload: RoundFinishedPayload) in
+            NotificationCenter.default.post(name: .roundDidFinish, object: nil, userInfo: ["payload": payload])
+        }
+        
+        gameChannel.on(.roundStarted, with: decoder) { (payload: RoundStartPayload) in
+            NotificationCenter.default.post(name: .roundDidStart, object: nil, userInfo: ["payload": payload])
+        }
+        
+        gameChannel.on(.skippedPlayersUpdated, with: decoder) { (payload: SkippedPlayersPayload) in
+            NotificationCenter.default.post(name: .skippedPlayersDidUpdate, object: nil, userInfo: ["skippedPlayers": payload.skippedPlayers])
+        }
+        
+        gameChannel.on(.tableUpdated, with: decoder) { (payload: TableUpdatedPayload) in
+            NotificationCenter.default.post(name: .tableDidUpdate, object: nil, userInfo: ["table": payload.table])
+        }
+        
+        gameChannel.join(with: decoder) { [weak self] (result: Result<NoReply, GameConnectError>) in
+            switch result {
+            case .success(_):
+                print("Connected to game")
                 
-                for group in tableDicts[playerId]! {
-                    let cards = group.compactMap(self.cardFromDict)
-                    playerTable.append(cards)
-                }
-                
-                table[playerId] = playerTable
-            }
-            
-            // Broadcast the latest state
-            var info: [AnyHashable: Any] = [
-                "currentPlayer": currentPlayer,
-                "gameOver": gameOver,
-                "hand": hand,
-                "handCounts": handCounts,
-                "hasDrawn": hasDrawn,
-                "levels": levels,
-                "players": players,
-                "playersReady": Set(playersReady),
-                "remainingPlayers": Set(remainingPlayers),
-                "roundNumber": roundNumber,
-                "scores": scores,
-                "settings": GameSettings(skipNextPlayer: skipNextPlayer),
-                "skippedPlayers": Set(skippedPlayers),
-                "table": table
-            ]
-            
-            if let discardTopDict = discardTopDict { info["discardTop"] = self.cardFromDict(discardTopDict) }
-            if let roundWinnerDict = roundWinnerDict { info["roundWinner"] = self.playerFromDict(roundWinnerDict) }
-            
-            NotificationCenter.default.post(name: .didReceiveGameState, object: nil, userInfo: info)
-        }
-        
-        gameChannel.on("new_discard_top") { [weak self] message in
-            guard let self = self else { return }
-            
-            let cardDict = message.payload["discard_top"] as? [String: String]
-            let userInfo: [AnyHashable: Any] = cardDict == nil ? [:] : ["discardTop": self.cardFromDict(cardDict!)!]
-            
-            NotificationCenter.default.post(name: .discardTopDidChange, object: nil, userInfo: userInfo)
-        }
-        
-        gameChannel.on("new_turn") { message in
-            guard let player = message.payload["player"] as? String else { return }
-            NotificationCenter.default.post(name: .currentPlayerDidUpdate, object: nil, userInfo: ["player": player])
-        }
-        
-        gameChannel.on("player_removed") { message in
-            guard let playerId = message.payload["player"] as? String else { return }
-            NotificationCenter.default.post(name: .didRemovePlayer, object: nil, userInfo: ["player": playerId])
-        }
-        
-        gameChannel.on("players_ready") { message in
-            guard let playersReady = message.payload["players"] as? [String] else { return }
-            NotificationCenter.default.post(name: .didReceivePlayersReadyUpdate, object: nil, userInfo: ["playersReady": Set(playersReady)])
-        }
-        
-        gameChannel.on("players_updated") { [weak self] message in
-            guard let self = self,
-                  let playerDicts = message.payload["players"] as? [[String: String]]
-            else { return }
-            
-            let players: [Player] = playerDicts.compactMap(self.playerFromDict)
-            NotificationCenter.default.post(name: .didReceiveUpdatedPlayerList, object: nil, userInfo: ["players": players])
-        }
-        
-        gameChannel.on("round_finished") { [weak self] message in
-            guard let self = self,
-                  let scoreDicts = message.payload["scores"] as? [[String: Any]],
-                  let winnerDict = message.payload["winner"] as? [String: String],
-                  let winner = self.playerFromDict(winnerDict)
-            else { return }
-            
-            let scores = scoreDicts.compactMap(self.scoreFromDict)
-            NotificationCenter.default.post(name: .roundDidFinish, object: nil, userInfo: ["scores": scores, "winner": winner])
-        }
-        
-        gameChannel.on("round_started") { [weak self] message in
-            guard let self = self,
-                  let currentPlayer = message.payload["current_player"] as? String,
-                  let handCounts = message.payload["hand_counts"] as? [String: Int],
-                  let handDicts = message.payload["hand"] as? [[String: String]],
-                  let levelDicts = message.payload["levels"] as? [String: [[String: Any]]],
-                  let remainingPlayers = message.payload["remaining_players"] as? [String],
-                  let roundNumber = message.payload["round_number"] as? Int,
-                  let skipNextPlayer = message.payload["skip_next_player"] as? Bool
-            else { return }
-            
-            let discardTopDict = message.payload["discard_top"] as? [String: String]
-            let hand = handDicts.compactMap(self.cardFromDict)
-            let levels = self.levelsFromDict(levelDicts)
-            
-            var info: [AnyHashable: Any] = [
-                "currentPlayer": currentPlayer,
-                "hand": hand,
-                "handCounts": handCounts,
-                "levels": levels,
-                "remainingPlayers": Set(remainingPlayers),
-                "roundNumber": roundNumber,
-                "settings": GameSettings(skipNextPlayer: skipNextPlayer)
-            ]
-            
-            if let discardTopDict = discardTopDict { info["discardTop"] = self.cardFromDict(discardTopDict) }
-            
-            NotificationCenter.default.post(name: .roundDidStart, object: nil, userInfo: info)
-        }
-        
-        gameChannel.on("skipped_players_updated") { message in
-            guard let skippedPlayers = message.payload["skipped_players"] as? [String] else { return }
-            NotificationCenter.default.post(name: .skippedPlayersDidUpdate, object: nil, userInfo: ["skippedPlayers": Set(skippedPlayers)])
-        }
-        
-        gameChannel.on("table_updated") { [weak self] message in
-            guard let self = self,
-                  let tableDicts = message.payload["table"] as? [String: [[[String: String]]]]
-            else { return }
-            
-            var table: [String: [[Card]]] = [:]
-            for playerId in tableDicts.keys {
-                var playerTable: [[Card]] = []
-                
-                for group in tableDicts[playerId]! {
-                    let cards = group.compactMap(self.cardFromDict)
-                    playerTable.append(cards)
-                }
-                
-                table[playerId] = playerTable
-            }
-            
-            NotificationCenter.default.post(name: .tableDidUpdate, object: nil, userInfo: ["table": table])
-        }
-        
-        gameChannel
-            .join()
-            .receive("ok") { [weak self] message in
-                print("Connected to game", message.payload)
-                
-                if let self = self, !self.sentDeviceToken, NotificationManager.shared.deviceToken != nil {
+                if let self = self, !self.sentDeviceToken,
+                   NotificationManager.shared.deviceToken != nil {
                     self.sendDeviceTokenToServer()
                 }
                 
                 if let completionHandler = completionHandler { completionHandler(nil) }
-            }
-            .receive("error") { [weak self] message in
+            case .failure(let error):
                 guard let self = self else { return }
                 gameChannel.leave()
                 self.gameChannel = nil
-                
-                if let completionHandler = completionHandler,
-                   let reason = message.payload["reason"] as? String {
-                    switch reason {
-                    case "Game has already started":
-                        completionHandler(.alreadyStarted)
-                    case "Game is full":
-                        completionHandler(.full)
-                    case "Game not found":
-                        completionHandler(.notFound)
-                    default:
-                        print("Failed to connect to game for unrecognized reason:", reason)
-                        completionHandler(.unknownError(reason))
-                    }
-                }
+                if let completionHandler = completionHandler { completionHandler(error) }
             }
-    }
-    
-    private func cardFromDict(_ dict: [String: String]) -> Card? {
-        guard let color = dict["color"], let value = dict["value"] else { return nil }
-        return Card(color: color, value: value)
-    }
-    
-    private func levelsFromDict(_ dict: [String: [[String: Any]]]) -> [String: Level] {
-        return Dictionary(uniqueKeysWithValues: dict.map({ (playerId: String, levelGroups: [[String : Any]]) in
-            let groups: [LevelGroup] = levelGroups.compactMap { group in
-                guard let count = group["count"] as? Int,
-                      let typeString = group["type"] as? String,
-                      let type = LevelGroupType(rawValue: typeString)
-                else { return nil }
-                
-                return LevelGroup(count: count, type: type)
-            }
-            
-            return (playerId, Level(groups: groups))
-        }))
-    }
-    
-    private func playerFromDict(_ dict: [String: String]) -> Player? {
-        guard let name = dict["name"], let id = dict["id"] else { return nil }
-        return Player(name: name, id: id)
-    }
-    
-    private func scoreFromDict(_ dict: [String: Any]) -> Score? {
-        guard let level = dict["level"] as? Int,
-              let playerId = dict["player_id"] as? String,
-              let points = dict["points"] as? Int
-        else { return nil }
-        
-        return Score(level: level, playerId: playerId, points: points)
+        }
     }
     
     // MARK: Notification handlers

@@ -43,8 +43,6 @@ class GameViewModel: ObservableObject {
     var settings = GameSettings(skipNextPlayer: false)
     var skippedPlayers = Set<String>()
     
-    private let joinCodeKey = "joinCode"
-    
     var isCurrentPlayer: Bool {
         return UserManager.shared.id == currentPlayer
     }
@@ -253,7 +251,7 @@ class GameViewModel: ObservableObject {
     
     private func maybeConnectToExistingGame() {
         if !unsupportedVersion,
-           let joinCode = UserDefaults.standard.string(forKey: joinCodeKey) {
+           let joinCode = UserDefaults.standard.string(forKey: UserDefaultsKeys.joinCodeKey) {
             Task {
                 do {
                     try await NetworkManager.shared.reconnectToGame(withCode: joinCode)
@@ -300,7 +298,7 @@ class GameViewModel: ObservableObject {
     }
     
     private func saveJoinCode(_ joinCode: String?) {
-        UserDefaults.standard.set(joinCode, forKey: joinCodeKey)
+        UserDefaults.standard.set(joinCode, forKey: UserDefaultsKeys.joinCodeKey)
     }
     
     // MARK: Notification Handlers
@@ -316,22 +314,22 @@ class GameViewModel: ObservableObject {
     }
     
     @objc private func onAddToTableError(_ notification: Notification) {
-        guard let error = notification.userInfo?["error"] as? String else { return }
+        guard let error = notification.userInfo?["error"] as? AddToTableError else { return }
         
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             var message: String
             
             switch error {
-            case "invalid_group":
+            case .invalidGroup:
                 message = "Those cards don't match the group silly 😋"
-            case "level_incomplete":
+            case .levelIncomplete:
                 message = "Finish up your own level before you worry about others 🤓"
-            case "needs_to_draw":
+            case .needsToDraw:
                 message = "You need to draw before you can do that 😂"
-            case "not_your_turn":
+            case .notYourTurn:
                 message = "Watch it bud! It's not your turn yet 😠"
-            default:
+            case .unrecognized(_):
                 message = "An unexpected error occurred. Please try force quitting the app and then try again 🤯"
             }
             
@@ -340,22 +338,22 @@ class GameViewModel: ObservableObject {
     }
     
     @objc private func onCardDrawError(_ notification: Notification) {
-        guard let error = notification.userInfo?["error"] as? String else { return }
+        guard let error = notification.userInfo?["error"] as? CardDrawError else { return }
         
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             var message: String
             
             switch error {
-            case "already_drawn":
+            case .alreadyDrawn:
                 message = "You can't draw twice in the same turn silly 😋"
-            case "empty_discard_pile":
+            case .emptyDiscardPile:
                 message = "What are you trying to draw? The discard pile is empty... 🕵️‍♂️"
-            case "skip":
-                message = "You can't draw a skip that has already been discarded 😂"
-            case "not_your_turn":
+            case .notYourTurn:
                 message = "Watch it bud! It's not your turn yet 😠"
-            default:
+            case .skip:
+                message = "You can't draw a skip that has already been discarded 😂"
+            case .unrecognized(_):
                 message = "An unexpected error occurred. Please try force quitting the app and then try again 🤯"
             }
             
@@ -391,23 +389,24 @@ class GameViewModel: ObservableObject {
     }
     
     @objc private func onDiscardError(_ notification: Notification) {
-        let error = notification.userInfo?["error"] as? String
         DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
+            guard let self = self,
+                  let error = notification.userInfo?["error"] as? DiscardError
+            else { return }
             
             var message: String
             switch error {
-            case "no_card":
-                message = "You need to select a card in your hand before you can discard it silly 😄"
-            case "already_skipped":
+            case .alreadySkipped:
                 message = "They were already skipped... Continue that vendetta on your next turn instead 😈"
-            case "choose_skip_target":
+            case .chooseSkipTarget:
                 message = "I'm not sure what you just did, but I don't like it 🤨"
-            case "not_your_turn":
-                message = "What are you up to? You can't discard when it's not your turn... 🕵️‍♂️"
-            case "need_to_draw":
+            case .needToDraw:
                 message = "You can't discard when you haven't drawn yet 🤓"
-            default:
+            case .noCard:
+                message = "You need to select a card in your hand before you can discard it silly 😄"
+            case .notYourTurn:
+                message = "What are you up to? You can't discard when it's not your turn... 🕵️‍♂️"
+            case .unrecognized(_):
                 message = "I'm not sure what you just did, but I don't like it 🤨"
             }
             
@@ -439,11 +438,13 @@ class GameViewModel: ObservableObject {
         DispatchQueue.main.async {
             self.waitingOnAction = false
             
+            guard let error = notification.userInfo?["error"] as? GameCreationError else { return }
+            
             withAnimation {
-                switch notification.userInfo?["error"] as? String ?? "" {
-                case "socket error":
+                switch error {
+                case .networkError:
                     self.error = "The network connection exploded, and couldn't connect to the created game. Please force quit the app and try again 🤯"
-                default:
+                case .serverError:
                     self.error = "Our servers exploded, and the game couldn't be created. Please try again later 🤯"
                 }
             }
@@ -451,16 +452,14 @@ class GameViewModel: ObservableObject {
     }
     
     @objc private func onGameOver(_ notification: Notification) {
-        guard let winner = notification.userInfo?["roundWinner"] as? Player,
-              let scores = notification.userInfo?["scores"] as? [Score]
-        else { return }
+        guard let payload = notification.userInfo?["payload"] as? GameFinishedPayload else { return }
         
         DispatchQueue.main.async {
             self.gameOver = true
-            withAnimation { self.roundWinner = winner }
-            self.scores = scores.sorted()
+            withAnimation { self.roundWinner = payload.roundWinner }
+            self.scores = payload.scores.sorted()
             
-            if let gameWinner = scores.first?.playerId,
+            if let gameWinner = self.scores.first?.playerId,
                gameWinner == UserManager.shared.id {
                 HapticManager.playSuccess()
                 SoundManager.shared.playSuccess()
@@ -472,35 +471,29 @@ class GameViewModel: ObservableObject {
     }
     
     @objc private func onGameStart(_ notification: Notification) {
-        guard let currentPlayer = notification.userInfo?["currentPlayer"] as? String,
-              let discardTop = notification.userInfo?["discardTop"] as? Card,
-              let hand = notification.userInfo?["hand"] as? [Card],
-              let levels = notification.userInfo?["levels"] as? [String: Level],
-              let players = notification.userInfo?["players"] as? [Player],
-              let settings = notification.userInfo?["settings"] as? GameSettings
-        else { return }
+        guard let game = notification.userInfo?["game"] as? Game else { return }
         
         HapticManager.playWarning()
         SoundManager.shared.playNotify()
-        let handCounts = Dictionary(uniqueKeysWithValues: players.map { ($0.id, 10) })
+        let handCounts = Dictionary(uniqueKeysWithValues: game.players.map { ($0.id, 10) })
         let remainingPlayers = Set(players.map { $0.id })
         
         DispatchQueue.main.async { [self] in
             completedLevel = false
-            self.currentPlayer = currentPlayer
+            self.currentPlayer = game.currentPlayer
             currentScreen = .game
-            discardPileTopCard = discardTop
+            discardPileTopCard = game.discardTop
             gameOver = false
-            self.hand = hand.sorted()
+            self.hand = game.hand.sorted()
             self.handCounts = handCounts
-            self.levels = levels
-            self.players = players
+            self.levels = game.levels
+            self.players = game.players
             playersReady.removeAll()
             self.remainingPlayers = remainingPlayers
             roundNumber = 1
             roundWinner = nil
             selectPlayerToSkip = false
-            self.settings = settings
+            self.settings = game.settings
             skippedPlayers.removeAll()
             tempTable = [:]
             table = [:]
@@ -509,63 +502,52 @@ class GameViewModel: ObservableObject {
     }
     
     @objc private func onGameStateUpdate(_ notification: Notification) {
-        guard let currentPlayer = notification.userInfo?["currentPlayer"] as? String,
-              let gameOver = notification.userInfo?["gameOver"] as? Bool,
-              var hand = notification.userInfo?["hand"] as? [Card],
-              let handCounts = notification.userInfo?["handCounts"] as? [String: Int],
-              let hasDrawn = notification.userInfo?["hasDrawn"] as? Bool,
-              let levels = notification.userInfo?["levels"] as? [String: Level],
-              let players = notification.userInfo?["players"] as? [Player],
-              let playersReady = notification.userInfo?["playersReady"] as? Set<String>,
-              let remainingPlayers = notification.userInfo?["remainingPlayers"] as? Set<String>,
-              let roundNumber = notification.userInfo?["roundNumber"] as? Int,
-              let scores = notification.userInfo?["scores"] as? [Score],
-              let settings = notification.userInfo?["settings"] as? GameSettings,
-              let skippedPlayers = notification.userInfo?["skippedPlayers"] as? Set<String>,
-              let table = notification.userInfo?["table"] as? [String: [[Card]]]
+        guard var game = notification.userInfo?["game"] as? Game,
+              let handCounts = game.handCounts,
+              let remainingPlayers = game.remainingPlayers,
+              let roundNumber = game.roundNumber,
+              let scores = game.scores,
+              let table = game.table
         else { return }
         
-        let completedLevel = table[UserManager.shared.id!] != nil
-        let discardTop = notification.userInfo?["discardTop"] as? Card
-        let roundWinner = notification.userInfo?["roundWinner"] as? Player
-        
+        let hasDrawn = game.hasDrawn ?? false
         var newCard: Card?
-        if hasDrawn {
-            newCard = hand[0]
-            hand.remove(at: 0)
+        if game.hasDrawn ?? false {
+            newCard = game.hand[0]
+            game.hand.remove(at: 0)
         }
         
-        hand.sort()
+        game.hand.sort()
         
         for groupIndex in tempTable.keys {
             for card in tempTable[groupIndex]! {
-                if let index = hand.firstIndex(of: card) {
-                    hand.remove(at: index)
+                if let index = game.hand.firstIndex(of: card) {
+                    game.hand.remove(at: index)
                 }
             }
         }
         
         DispatchQueue.main.async { [self] in
-            self.completedLevel = completedLevel
-            self.currentPlayer = currentPlayer
+            completedLevel = table[UserManager.shared.id!] != nil
+            currentPlayer = game.currentPlayer
             currentScreen = playersReady.contains(UserManager.shared.id ?? "") ? .scoring : .game
-            discardPileTopCard = discardTop
+            discardPileTopCard = game.discardTop
             drawnCard = newCard
-            self.gameOver = gameOver
-            self.hand = hand
+            gameOver = game.gameOver ?? false
+            hand = game.hand
             self.handCounts = handCounts
             self.hasDrawn = hasDrawn
-            self.levels = levels
+            levels = game.levels
             self.newCard = newCard
-            self.players = players
-            self.playersReady = playersReady
+            players = game.players
+            playersReady = game.playersReady ?? []
             self.remainingPlayers = remainingPlayers
             self.roundNumber = roundNumber
-            withAnimation { self.roundWinner = roundWinner }
+            withAnimation { self.roundWinner = game.roundWinner }
             self.scores = scores.sorted()
             selectPlayerToSkip = false
-            self.settings = settings
-            self.skippedPlayers = skippedPlayers
+            settings = game.settings
+            skippedPlayers = game.skippedPlayers ?? []
             self.table = table
         }
     }
@@ -657,9 +639,7 @@ class GameViewModel: ObservableObject {
     }
     
     @objc private func onRoundFinished(_ notification: Notification) {
-        guard let winner = notification.userInfo?["winner"] as? Player,
-              let scores = notification.userInfo?["scores"] as? [Score]
-        else { return }
+        guard let payload = notification.userInfo?["payload"] as? RoundFinishedPayload else { return }
         
         if completedLevel {
             HapticManager.playSuccess()
@@ -671,45 +651,36 @@ class GameViewModel: ObservableObject {
         
         DispatchQueue.main.async { [self] in
             playersReady.removeAll()
-            withAnimation { roundWinner = winner }
-            self.scores = scores.sorted()
+            withAnimation { roundWinner = payload.winner }
+            self.scores = payload.scores.sorted()
         }
     }
     
     @objc private func onRoundStart(_ notification: Notification) {
-        guard let currentPlayer = notification.userInfo?["currentPlayer"] as? String,
-              let hand = notification.userInfo?["hand"] as? [Card],
-              let handCounts = notification.userInfo?["handCounts"] as? [String: Int],
-              let levels = notification.userInfo?["levels"] as? [String: Level],
-              let remainingPlayers = notification.userInfo?["remainingPlayers"] as? Set<String>,
-              let roundNumber = notification.userInfo?["roundNumber"] as? Int,
-              let settings = notification.userInfo?["settings"] as? GameSettings
-        else { return }
+        guard let payload = notification.userInfo?["payload"] as? RoundStartPayload else { return }
         
         HapticManager.playWarning()
         SoundManager.shared.playNotify()
-        let discardTop = notification.userInfo?["discardTop"] as? Card
         
         DispatchQueue.main.async { [self] in
-            self.completedLevel = false
-            self.currentPlayer = currentPlayer
+            completedLevel = false
+            currentPlayer = payload.currentPlayer
             currentScreen = .game
-            discardPileTopCard = discardTop
+            discardPileTopCard = payload.discardTop
             drawnCard = nil
-            self.hand = hand.sorted()
-            self.handCounts = handCounts
+            hand = payload.hand.sorted()
+            handCounts = payload.handCounts
             hasDrawn = false
-            self.levels = levels
+            levels = payload.levels
             newCard = nil
             newCardSelected = false
             playersReady.removeAll()
-            self.remainingPlayers = remainingPlayers
-            self.roundNumber = roundNumber
+            remainingPlayers = payload.remainingPlayers
+            roundNumber = payload.roundNumber
             roundWinner = nil
-            self.scores = scores.sorted()
             selectedIndices = []
             selectPlayerToSkip = false
-            self.settings = settings
+            settings = payload.settings
             skippedPlayers.removeAll()
             table = [:]
             tempTable = [:]

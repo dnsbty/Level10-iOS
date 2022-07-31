@@ -21,6 +21,12 @@
 		D7A62EFD2838294C00B8E466 /* NetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A62EFC2838294C00B8E466 /* NetworkManager.swift */; };
 		D7A62EFF28383B4200B8E466 /* UserManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A62EFE28383B4200B8E466 /* UserManager.swift */; };
 		D7A62F042838820700B8E466 /* Configuration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A62F032838820700B8E466 /* Configuration.swift */; };
+		D7A82E512895C22900003846 /* Channel+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A82E502895C22900003846 /* Channel+Ext.swift */; };
+		D7A82E532895C27200003846 /* Payloads.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A82E522895C27200003846 /* Payloads.swift */; };
+		D7A82E552895C2B500003846 /* Level.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A82E542895C2B500003846 /* Level.swift */; };
+		D7A82E572895C2F100003846 /* Score.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A82E562895C2F100003846 /* Score.swift */; };
+		D7A82E592895CDC600003846 /* Result+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A82E582895CDC600003846 /* Result+Ext.swift */; };
+		D7A82E5B2895D9F300003846 /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A82E5A2895D9F300003846 /* Errors.swift */; };
 		D7BF72E0283193370051E689 /* Level10App.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7BF72DF283193370051E689 /* Level10App.swift */; };
 		D7BF72E4283193370051E689 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D7BF72E3283193370051E689 /* Assets.xcassets */; };
 		D7BF72E7283193370051E689 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D7BF72E6283193370051E689 /* Preview Assets.xcassets */; };
@@ -61,6 +67,12 @@
 		D7A62EFE28383B4200B8E466 /* UserManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserManager.swift; sourceTree = "<group>"; };
 		D7A62F0028383BB700B8E466 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D7A62F032838820700B8E466 /* Configuration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
+		D7A82E502895C22900003846 /* Channel+Ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Channel+Ext.swift"; sourceTree = "<group>"; };
+		D7A82E522895C27200003846 /* Payloads.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Payloads.swift; sourceTree = "<group>"; };
+		D7A82E542895C2B500003846 /* Level.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Level.swift; sourceTree = "<group>"; };
+		D7A82E562895C2F100003846 /* Score.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Score.swift; sourceTree = "<group>"; };
+		D7A82E582895CDC600003846 /* Result+Ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Result+Ext.swift"; sourceTree = "<group>"; };
+		D7A82E5A2895D9F300003846 /* Errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Errors.swift; sourceTree = "<group>"; };
 		D7BF72DC283193370051E689 /* Level10.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Level10.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D7BF72DF283193370051E689 /* Level10App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Level10App.swift; sourceTree = "<group>"; };
 		D7BF72E3283193370051E689 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -104,6 +116,9 @@
 			children = (
 				D7E30FAE2844675E007B190B /* Card.swift */,
 				D7C70E65283ABDC800C4A41B /* Game.swift */,
+				D7A82E542895C2B500003846 /* Level.swift */,
+				D7A82E562895C2F100003846 /* Score.swift */,
+				D7A82E522895C27200003846 /* Payloads.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -115,6 +130,7 @@
 				D72E74602873C9A200CD61A3 /* Managers */,
 				D7A62F032838820700B8E466 /* Configuration.swift */,
 				D74492A32873D56A0003C5CF /* Constants.swift */,
+				D7A82E5A2895D9F300003846 /* Errors.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -145,6 +161,8 @@
 			children = (
 				D7BF72EF283196020051E689 /* Color+Ext.swift */,
 				D7C70E67283ABE4400C4A41B /* Notification+Ext.swift */,
+				D7A82E502895C22900003846 /* Channel+Ext.swift */,
+				D7A82E582895CDC600003846 /* Result+Ext.swift */,
 				D7C9B190288BB9F700FDCD74 /* Bundle+Ext.swift */,
 			);
 			path = Extensions;
@@ -311,18 +329,23 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D7A82E572895C2F100003846 /* Score.swift in Sources */,
 				D74492A42873D56A0003C5CF /* Constants.swift in Sources */,
 				D7A62EFD2838294C00B8E466 /* NetworkManager.swift in Sources */,
 				D7E30FAF2844675E007B190B /* Card.swift in Sources */,
 				D7C70E66283ABDC800C4A41B /* Game.swift in Sources */,
 				D7BF72F72831A0420051E689 /* CreateGameView.swift in Sources */,
 				D7EBFAA828879443004D6482 /* SoundManager.swift in Sources */,
+				D7A82E532895C27200003846 /* Payloads.swift in Sources */,
 				D72E74652873D1A700CD61A3 /* SkipSelectModal.swift in Sources */,
 				D74835D92868FD680043846C /* NotificationManager.swift in Sources */,
+				D7A82E592895CDC600003846 /* Result+Ext.swift in Sources */,
 				D7A62F042838820700B8E466 /* Configuration.swift in Sources */,
 				D7C70E68283ABE4400C4A41B /* Notification+Ext.swift in Sources */,
 				D7BF72EE2831936F0051E689 /* HomeView.swift in Sources */,
+				D7A82E552895C2B500003846 /* Level.swift in Sources */,
 				D7C70E6A283AC21C00C4A41B /* GameViewModel.swift in Sources */,
+				D7A82E5B2895D9F300003846 /* Errors.swift in Sources */,
 				D7872F36284C17BD004AA89E /* RoundCompleteModal.swift in Sources */,
 				D762F4E1284D6DDF008FADA4 /* ScoreView.swift in Sources */,
 				D7C9B18F288BA69C00FDCD74 /* UnsupportedVersionModal.swift in Sources */,
@@ -336,6 +359,7 @@
 				D7BF72F4283198080051E689 /* L10Button.swift in Sources */,
 				D74835D52868C8B90043846C /* HapticManager.swift in Sources */,
 				D7BF72F0283196020051E689 /* Color+Ext.swift in Sources */,
+				D7A82E512895C22900003846 /* Channel+Ext.swift in Sources */,
 				D7BF73012831B9C20051E689 /* CardView.swift in Sources */,
 				D7BF73032831C17F0051E689 /* GameView.swift in Sources */,
 				D7C9B191288BB9F700FDCD74 /* Bundle+Ext.swift in Sources */,
@@ -414,7 +438,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Level10/Level10.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_ASSET_PATHS = "\"Level10/Preview Content\"";
 				DEVELOPMENT_TEAM = QQWWMCLZJZ;
 				ENABLE_PREVIEWS = YES;
@@ -562,7 +586,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Level10/Level10.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_ASSET_PATHS = "\"Level10/Preview Content\"";
 				DEVELOPMENT_TEAM = QQWWMCLZJZ;
 				ENABLE_PREVIEWS = YES;
@@ -596,7 +620,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Level10/Level10.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_ASSET_PATHS = "\"Level10/Preview Content\"";
 				DEVELOPMENT_TEAM = QQWWMCLZJZ;
 				ENABLE_PREVIEWS = YES;
