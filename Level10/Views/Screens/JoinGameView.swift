@@ -100,6 +100,9 @@ struct JoinGameView: View {
         Task {
             do {
                 try await NetworkManager.shared.joinGame(withCode: joinCode, displayName: displayName)
+            } catch NetworkError.connectionError {
+                viewModel.waitingOnAction = false
+                withAnimation { viewModel.error = "Can't connect to the server. Please try again later 💀" }
             } catch {
                 HapticManager.playError()
                 viewModel.waitingOnAction = false

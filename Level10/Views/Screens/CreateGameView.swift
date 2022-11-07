@@ -109,6 +109,9 @@ struct CreateGameView: View {
             } catch NetworkError.channelNotJoined {
                 viewModel.waitingOnAction = false
                 withAnimation { viewModel.error = "The socket isn't configured properly 🤓" }
+            } catch NetworkError.connectionError {
+                viewModel.waitingOnAction = false
+                withAnimation { viewModel.error = "Can't connect to the server. Please try again later 💀" }
             }
         }
     }

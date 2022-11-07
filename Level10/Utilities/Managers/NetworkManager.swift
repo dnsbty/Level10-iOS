@@ -19,6 +19,7 @@ enum NetworkError: Error {
     case badServerResponse
     case badURL
     case channelNotJoined
+    case connectionError
     case notFound
     case requestRateLimited
     case requestForbidden
@@ -93,7 +94,7 @@ final class NetworkManager {
      */
     func addToTable(cards: [Card], tablePlayerId: String, groupPosition: Int) async throws {
         guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketNotConnected }
-        if !socket.isConnected { await connectSocket() }
+        if !socket.isConnected { try await connectSocket() }
         
         let params = AddToTableParams(cards: cards, playerId: tablePlayerId, groupPosition: groupPosition)
         
@@ -110,7 +111,7 @@ final class NetworkManager {
     /**
      Establish connection with the websocket server and join the lobby channel.
      */
-    func connectSocket() async {
+    func connectSocket() async throws {
         guard let socket = socket, let channel = lobbyChannel, !socket.isConnected else { return }
         do {
             authToken = try await UserManager.shared.getToken()
@@ -129,6 +130,7 @@ final class NetworkManager {
             }
         } catch {
             print("Error connecting to socket: ", error)
+            throw NetworkError.connectionError
         }
     }
     
@@ -142,7 +144,7 @@ final class NetworkManager {
      */
     func createGame(withDisplayName name: String, settings: GameSettings) async throws {
         guard let socket = socket else { throw NetworkError.socketNotConnected }
-        if !socket.isConnected { await connectSocket() }
+        if !socket.isConnected { try await connectSocket() }
         guard let channel = lobbyChannel else { throw NetworkError.channelNotJoined }
         
         let params = CreateGameParams(displayName: name, settings: settings)
@@ -205,7 +207,7 @@ final class NetworkManager {
      */
     func discardCard(card: Card, playerToSkip: String?) async throws {
         guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketNotConnected }
-        if !socket.isConnected { await connectSocket() }
+        if !socket.isConnected { try await connectSocket() }
         
         let params = DiscardParams(card: card, playerToSkip: playerToSkip)
         
@@ -226,7 +228,7 @@ final class NetworkManager {
      */
     func drawCard(source: DrawSource) async throws {
         guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketNotConnected }
-        if !socket.isConnected { await connectSocket() }
+        if !socket.isConnected { try await connectSocket() }
         let params = DrawCardParams(source: source)
         
         channel.push(.drawCard, payload: params.toDict(), with: decoder) { (result: Result<CardPayload, CardDrawError>) in
@@ -258,7 +260,7 @@ final class NetworkManager {
      */
     func joinGame(withCode joinCode: String, displayName name: String) async throws {
         guard let socket = socket else { throw NetworkError.socketNotConnected }
-        if !socket.isConnected { await connectSocket() }
+        if !socket.isConnected { try await connectSocket() }
         let params = JoinGameParams(displayName: name)
         self.connectToGame(joinCode: joinCode, params: params) { error in
             if let error = error {
@@ -307,7 +309,7 @@ final class NetworkManager {
      */
     func reconnectToGame(withCode joinCode: String) async throws {
         guard let socket = socket else { throw NetworkError.socketNotConnected }
-        if !socket.isConnected { await connectSocket() }
+        if !socket.isConnected { try await connectSocket() }
         self.connectToGame(joinCode: joinCode) { error in
             guard error == nil else {
                 UserDefaults.standard.set(nil, forKey: UserDefaultsKeys.joinCodeKey)
@@ -344,7 +346,7 @@ final class NetworkManager {
      */
     func tableCards(table: [[Card]]) async throws {
         guard let socket = socket, let channel = gameChannel else { throw NetworkError.socketNotConnected }
-        if !socket.isConnected { await connectSocket() }
+        if !socket.isConnected { try await connectSocket() }
         
         let params = SetTableParams(table: table)
         
