@@ -83,6 +83,7 @@ class GameViewModel: ObservableObject {
         NotificationCenter.default.addObserver(self, selector: #selector(onLeaveGame), name: .didLeaveGame, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onAddToTableError), name: .didReceiveAddToTableError, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onCardDrawError), name: .didReceiveCardDrawError, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onDiscardError), name: .didReceiveDiscardError, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameCreationError), name: .didReceiveGameCreationError, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onGameStateUpdate), name: .didReceiveGameState, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onPlayersReadyUpdate), name: .didReceivePlayersReadyUpdate, object: nil)
@@ -400,7 +401,7 @@ class GameViewModel: ObservableObject {
                 message = "They were already skipped... Continue that vendetta on your next turn instead 😈"
             case .chooseSkipTarget:
                 message = "I'm not sure what you just did, but I don't like it 🤨"
-            case .needToDraw:
+            case .needsToDraw:
                 message = "You can't discard when you haven't drawn yet 🤓"
             case .noCard:
                 message = "You need to select a card in your hand before you can discard it silly 😄"

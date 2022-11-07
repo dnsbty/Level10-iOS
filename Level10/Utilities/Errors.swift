@@ -68,7 +68,7 @@ enum ConnectError: Decodable, Error, Equatable {
 enum DiscardError: Decodable, Error {
     case alreadySkipped
     case chooseSkipTarget
-    case needToDraw
+    case needsToDraw
     case noCard
     case notYourTurn
     case unrecognized(String)
@@ -81,7 +81,7 @@ enum DiscardError: Decodable, Error {
         case "already_skipped": self = .alreadySkipped
         case "choose_skip_target": self = .chooseSkipTarget
         case "not_your_turn": self = .notYourTurn
-        case "need_to_draw": self = .needToDraw
+        case "needs_to_draw": self = .needsToDraw
         default: self = .unrecognized(reason)
         }
     }

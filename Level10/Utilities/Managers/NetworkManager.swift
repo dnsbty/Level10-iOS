@@ -214,7 +214,7 @@ final class NetworkManager {
             case .success(let payload):
                 NotificationCenter.default.post(name: .handDidUpdate, object: nil, userInfo: ["hand": payload.hand])
             case .failure(let error):
-                NotificationCenter.default.post(name: .didReceiveGameCreationError, object: nil, userInfo: ["error": error])
+                NotificationCenter.default.post(name: .didReceiveDiscardError, object: nil, userInfo: ["error": error])
             }
         }
     }
